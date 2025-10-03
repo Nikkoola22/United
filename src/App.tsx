@@ -2,7 +2,6 @@ import type React from "react";
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import {
   Clock,
-  GraduationCap,
   Users,
   Phone,
   Mail,
@@ -10,7 +9,6 @@ import {
   Sparkles,
   Send,
   ArrowLeft,
-  Home,
   Play,
   Pause,
   Volume2,
@@ -19,6 +17,15 @@ import {
   HelpCircle,
   Mic,
   MicOff,
+  FileText,
+  ChevronRight,
+  Zap,
+  Shield,
+  TrendingUp,
+  CheckCircle,
+  Info,
+  Search,
+  X,
 } from "lucide-react";
 
 import { sommaire } from "./data/sommaire.ts";
@@ -28,7 +35,8 @@ import { teletravailData } from "./data/teletravail.ts";
 import { infoItems } from "./data/info-data.ts";
 import { podcastEpisodes, type PodcastEpisode } from "./data/podcasts/mp3.ts";
 import { faqData } from "./data/FAQ.ts";
-import mairieImage from "./assets/mairie.jpeg";
+import { sommaires } from "./data/sommaires.ts";
+import { chapitres as chapitresPrimes } from "./data/primes.ts";
 
 interface ChatMessage {
   type: "user" | "assistant";
@@ -57,7 +65,8 @@ const API_KEY = import.meta.env.VITE_API_KEY;
 const API_URL = "https://api.perplexity.ai/chat/completions";
 
 const fluxOriginal = "https://www.franceinfo.fr/politique.rss";
-const proxyUrl = "https://corsproxy.io/?";
+// Utilisation d'un proxy CORS alternatif
+const proxyUrl = "https://api.allorigins.win/raw?url=";
 const FLUX_ACTUALITES_URL = proxyUrl + encodeURIComponent(fluxOriginal);
 
 const actualitesSecours = [
@@ -69,6 +78,7 @@ const actualitesSecours = [
 ];
 
 const sommaireData = JSON.parse(sommaire);
+const sommairesData = JSON.parse(sommaires);
 
 const nettoyerChaine = (chaine: unknown): string => {
   if (typeof chaine !== "string") return "";
@@ -88,15 +98,30 @@ const NewsTicker: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Fonction pour générer un lien via le proxy
-  const proxyLink = (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  const proxyLink = (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 
   useEffect(() => {
     const chargerFlux = async () => {
       try {
+        console.log('🔄 Tentative de chargement du flux RSS:', FLUX_ACTUALITES_URL);
         const res = await fetch(FLUX_ACTUALITES_URL);
-        if (!res.ok) throw new Error("Failed to fetch RSS feed");
+        
+        if (!res.ok) {
+          console.error('❌ Erreur HTTP:', res.status, res.statusText);
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const xml = await res.text();
+        console.log('✅ RSS reçu, taille:', xml.length, 'caractères');
+        
         const doc = new DOMParser().parseFromString(xml, "text/xml");
+        
+        // Vérifier s'il y a des erreurs de parsing
+        const parserError = doc.querySelector("parsererror");
+        if (parserError) {
+          console.error('❌ Erreur de parsing XML:', parserError.textContent);
+          throw new Error("Erreur de parsing XML");
+        }
 
         const items = Array.from(doc.querySelectorAll("item"))
           .slice(0, 10)
@@ -112,9 +137,16 @@ const NewsTicker: React.FC = () => {
             };
           });
 
-        if (items.length) setActualites(items);
-      } catch {
-        console.error("Failed to load RSS feed, using fallback data.");
+        console.log('📰 Articles trouvés:', items.length);
+        if (items.length) {
+          setActualites(items);
+          console.log('✅ Flux RSS chargé avec succès');
+        } else {
+          console.warn('⚠️ Aucun article trouvé dans le flux RSS');
+        }
+      } catch (error) {
+        console.error('❌ Échec du chargement du flux RSS:', error);
+        console.log('🔄 Utilisation des données de secours');
       } finally {
         setLoading(false);
       }
@@ -132,8 +164,8 @@ const NewsTicker: React.FC = () => {
   }
 
   return (
-    <div className="w-full bg-blue-900/80 rounded-lg overflow-hidden border border-blue-500/30 shadow-inner">
-      <div className="flex items-center whitespace-nowrap py-6 ticker-container">
+    <div className="w-full backdrop-blur-xl bg-white/10 rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
+      <div className="flex items-center whitespace-nowrap py-8 ticker-container">
         <div className="flex animate-ticker hover:[animation-play-state:paused]">
           {[...actualites, ...actualites].map((item, idx) => (
             <a
@@ -141,11 +173,16 @@ const NewsTicker: React.FC = () => {
               href={proxyLink(item.link)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center mx-8 text-white hover:text-blue-200 transition-colors no-underline"
+              className="group flex items-center mx-12 text-white/90 hover:text-white transition-all duration-300 no-underline"
             >
-              <span className="mr-2 text-yellow-300 text-xl">📰</span>
-              <span className="font-semibold text-lg sm:text-xl">{item.title}</span>
-              <span className="mx-6 text-blue-300 text-xl">•</span>
+              <div className="relative">
+                <div className="absolute -inset-2 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur opacity-0 group-hover:opacity-50 transition-opacity" />
+                <div className="relative w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white text-sm">📰</span>
+                </div>
+              </div>
+              <span className="ml-4 font-semibold text-lg group-hover:text-blue-200 transition-colors">{item.title}</span>
+              <div className="mx-8 w-2 h-2 bg-white/40 rounded-full group-hover:bg-white/60 transition-colors"></div>
             </a>
           ))}
         </div>
@@ -158,7 +195,7 @@ const NewsTicker: React.FC = () => {
             100% { transform: translateX(-50%); }
           }
           .ticker-container { overflow: hidden; white-space: nowrap; }
-          .animate-ticker { display: inline-flex; animation: ticker 40s linear infinite; }
+          .animate-ticker { display: inline-flex; animation: ticker 45s linear infinite; }
         `
       }} />
     </div>
@@ -178,74 +215,128 @@ const FAQSection: React.FC<{ onReturn: () => void }> = ({ onReturn }) => {
   );
 
   return (
-    <div className="bg-white/95 rounded-3xl shadow-2xl border border-gray-200 overflow-hidden backdrop-blur-sm">
-      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={onReturn} className="text-white hover:text-orange-200 p-2 rounded-full hover:bg-white/10">
-            <ArrowLeft className="w-6 h-6" />
+    <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 p-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={onReturn} 
+              className="text-white hover:text-orange-200 p-3 rounded-full hover:bg-white/10 transition-all duration-200 group"
+            >
+              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
           </button>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute -inset-2 bg-white/20 rounded-full blur-lg opacity-50" />
+                <div className="relative w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                  <HelpCircle className="w-6 h-6 text-white" />
+                </div>
+              </div>
           <div>
-            <h3 className="text-xl font-bold text-white">FAQ - Questions fréquentes</h3>
-            <p className="text-orange-100 text-sm">Télétravail et Formation - Ville de Gennevilliers</p>
+                <h3 className="text-2xl font-bold text-white">FAQ - Questions fréquentes</h3>
+                <p className="text-orange-100 text-sm mt-1">Télétravail et Formation - Ville de Gennevilliers</p>
           </div>
         </div>
-        <HelpCircle className="w-8 h-8 text-white" />
+          </div>
+          <div className="text-right">
+            <div className="text-white/90 text-sm font-medium">CFDT Gennevilliers</div>
+            <div className="text-orange-200 text-xs">Support syndical</div>
+          </div>
+        </div>
       </div>
 
-      <div className="p-6">
-        {/* Barre de recherche */}
-        <div className="mb-6">
+      <div className="p-8 bg-gradient-to-b from-white/5 to-white/10">
+        {/* Modern Search Bar */}
+        <div className="mb-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-2xl blur-lg" />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="w-5 h-5 text-white/60" />
+              </div>
           <input
             type="text"
             placeholder="Rechercher une question ou réponse..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
           />
+            </div>
+          </div>
         </div>
 
-        {/* Détail FAQ sélectionnée */}
+        {/* Modern FAQ Detail Modal */}
         {selectedFAQ && (
-          <div className="mb-6 p-6 bg-orange-50 rounded-xl border border-orange-200">
+          <div className="mb-8 relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10" />
+            <div className="relative p-8">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    {selectedFAQ.id}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-white mb-2">{selectedFAQ.question}</h4>
+                  </div>
+                </div>
             <button
               onClick={() => setSelectedFAQ(null)}
-              className="float-right text-orange-600 hover:text-orange-800 font-bold text-xl"
+                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 text-white hover:text-red-300"
             >
-              ×
+                  <X className="w-6 h-6" />
             </button>
-            <h4 className="text-lg font-bold text-orange-800 mb-3">{selectedFAQ.question}</h4>
-            <p className="text-gray-700 leading-relaxed">{selectedFAQ.reponse}</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <p className="text-white/90 leading-relaxed">{selectedFAQ.reponse}</p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Liste des FAQ */}
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+        {/* Modern FAQ List */}
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {filteredFAQ.map((faq) => (
             <div
               key={faq.id}
-              className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer hover:border-orange-300"
+              className="group relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl hover:bg-white/15 hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1"
               onClick={() => setSelectedFAQ(faq)}
             >
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative p-6">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full blur opacity-50 group-hover:opacity-75 transition-opacity" />
+                    <div className="relative w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
                   {faq.id}
+                    </div>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 mb-2 group-hover:text-orange-700">
+                    <h4 className="font-semibold text-white mb-2 group-hover:text-orange-200 transition-colors duration-300">
                     {faq.question}
                   </h4>
-                  <p className="text-sm text-gray-600 truncate">
+                    <p className="text-sm text-white/70 truncate">
                     {faq.reponse.substring(0, 120)}...
                   </p>
+                    <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="text-xs text-orange-300 font-medium">Cliquez pour voir la réponse</span>
+                      <ChevronRight className="w-4 h-4 text-orange-300" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
           
           {filteredFAQ.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <HelpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Aucune question trouvée pour "{searchTerm}"</p>
+            <div className="text-center py-12">
+              <div className="relative inline-block mb-6">
+                <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-red-500 rounded-full blur-xl opacity-30" />
+                <div className="relative w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-2xl">
+                  <HelpCircle className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <p className="text-white/70 text-lg">Aucune question trouvée pour "{searchTerm}"</p>
+              <p className="text-white/50 text-sm mt-2">Essayez avec d'autres mots-clés</p>
             </div>
           )}
         </div>
@@ -283,6 +374,41 @@ const trouverContextePertinent = (question: string): string => {
     .map(([id]) => {
       const titre = sommaireData.chapitres[id - 1].titre;
       const contenu = (chapitres as Record<number, string>)[id] || "";
+      return `Source: ${titre}\nContenu: ${contenu}`;
+    });
+
+  return top.join("\n\n---\n\n");
+};
+
+// =======================
+//  Trouver contexte PRIMES
+// =======================
+const trouverContextePertinentPrimes = (question: string): string => {
+  const qNet = nettoyerChaine(question);
+  const mots = qNet.split(/\s+/).filter(Boolean);
+  const scores = new Map<number, number>();
+
+  sommairesData.chapitres.forEach((chap: any, i: number) => {
+    let score = 0;
+    const keys = [...(chap.mots_cles || [])];
+    keys.forEach((mc: string) => {
+      const m = nettoyerChaine(mc);
+      if (mots.includes(m)) score += 10;
+      else if (qNet.includes(m)) score += 5;
+    });
+    if (score) scores.set(i + 1, (scores.get(i + 1) || 0) + score);
+  });
+
+  if (!scores.size) {
+    return "Aucun chapitre spécifique trouvé. Thèmes : " + sommairesData.chapitres.map((c: any) => c.titre).join(", ");
+  }
+
+  const top = Array.from(scores.entries())
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([id]) => {
+      const titre = sommairesData.chapitres[id - 1].titre;
+      const contenu = (chapitresPrimes as Record<number, string>)[id] || "";
       return `Source: ${titre}\nContenu: ${contenu}`;
     });
 
@@ -496,11 +622,12 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [interimText, setInterimText] = useState("");
+  const [internalDocQuestion, setInternalDocQuestion] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const silenceTimeoutRef = useRef<number | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -629,6 +756,141 @@ export default function App() {
     }, 100);
   };
 
+  // Fonction de détection de contexte pour rediriger vers le bon domaine
+  const detectContextAndRedirect = (question: string): number => {
+    const questionLower = question.toLowerCase();
+    
+    // Mots-clés pour le domaine 0 - Temps de travail
+    const tempsTravailKeywords = [
+      'temps de travail', 'horaires', 'congés', 'artt', 'rtt', 'temps partiel', 'absences',
+      'heures supplémentaires', 'astreintes', 'travail de nuit', 'journée solidarité',
+      'plages fixes', 'plages souplesse', 'repos', 'pause', 'amplitude', 'quotité',
+      'congé annuel', 'congé bonifié', 'don de jours', 'cet', 'congés naissance',
+      'fractionnement', 'jours fériés', 'report', 'vacances', 'maladie', 'accident',
+      'arrêt', 'clm', 'cld', 'pénibilité', 'invalidité'
+    ];
+    
+    // Mots-clés pour le domaine 1 - Formation
+    const formationKeywords = [
+      'formation', 'cours', 'stage', 'apprentissage', 'compétences', 'qualification',
+      'cpf', 'vae', 'concours', 'examen professionnel', 'bilan de compétences',
+      'cnfpt', 'diplôme', 'certification', 'professionnalisation', 'intégration',
+      'perfectionnement', 'syndicale', 'hygiène', 'sécurité', 'caces', 'haccp',
+      'congé formation', 'disponibilité', 'études', 'recherches', 'immersion',
+      'transition professionnelle', 'reconnaissance expérience', 'illettrisme'
+    ];
+    
+    // Mots-clés pour le domaine 2 - Télétravail
+    const teletravailKeywords = [
+      'télétravail', 'télétravailler', 'domicile', 'travail à distance', 'forfait',
+      'quotité', 'jours autorisés', 'indemnités', 'modalités', 'charte',
+      'volontariat', 'réversibilité', 'déconnexion', 'rythme', 'lieu',
+      'outils', 'matériel', 'informatique', 'sécurité', 'confidentialité',
+      'circonstances exceptionnelles', 'proche aidant', 'handicap', 'grossesse'
+    ];
+    
+    // Mots-clés pour le domaine 9 - Primes
+    const primesKeywords = [
+      'primes', 'indemnités', 'rémunération', 'rifseep', 'isfe', 'régime indemnitaire',
+      'bonification', 'supplément', 'complément', 'prime spéciale', 'installation',
+      'travail de nuit', 'dimanche', 'jours fériés', 'astreinte', 'intervention',
+      'permanence', 'panier', 'chaussures', 'équipement', 'sujétions horaires',
+      'surveillance', 'cantines', 'études surveillées', 'gardiennage', 'responsabilité',
+      'ifce', 'outillage personnel', 'grand âge', 'revalorisation', 'médecins'
+    ];
+    
+    // Compter les occurrences de chaque domaine
+    const scores = {
+      0: tempsTravailKeywords.filter(keyword => questionLower.includes(keyword)).length,
+      1: formationKeywords.filter(keyword => questionLower.includes(keyword)).length,
+      2: teletravailKeywords.filter(keyword => questionLower.includes(keyword)).length,
+      9: primesKeywords.filter(keyword => questionLower.includes(keyword)).length
+    };
+    
+    // Retourner le domaine avec le score le plus élevé, ou 0 par défaut
+    const bestDomain = Object.entries(scores).reduce((a, b) => {
+      const scoreA = scores[parseInt(a[0]) as keyof typeof scores];
+      const scoreB = scores[parseInt(b[0]) as keyof typeof scores];
+      return scoreA > scoreB ? a : b;
+    });
+    return bestDomain[1] > 0 ? parseInt(bestDomain[0]) : 0;
+  };
+
+  // Nouvelle fonction pour gérer la sélection de documents internes avec détection de contexte
+  const handleInternalDocSelection = async (question?: string) => {
+    console.log('🚀 handleInternalDocSelection appelé avec:', question);
+    let selectedDomain = 0; // Par défaut, domaine temps de travail
+    
+    if (question) {
+      selectedDomain = detectContextAndRedirect(question);
+      console.log(`Question: "${question}" -> Domaine détecté: ${selectedDomain}`);
+    }
+    
+    const welcomes: Record<number, string> = {
+      0: "Bonjour ! Je peux vous aider avec vos questions sur les horaires, congés, ARTT, temps partiel, heures supplémentaires, absences, etc.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      1: "Bonjour ! Je peux vous renseigner sur le CPF, les congés de formation, la VAE, les concours, les bilans de compétences, etc. Quelle est votre question ?\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      2: "Bonjour ! Je suis l'assistant spécialiste du télétravail. Posez-moi vos questions sur la charte, les jours autorisés, les indemnités, etc.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      9: "Bonjour ! Je suis l'assistant spécialiste du régime indemnitaire et des primes. Posez-moi vos questions sur le RIFSEEP, l'ISFE, les primes, indemnités, etc.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+    };
+    
+    // Créer le message utilisateur si une question est fournie
+    const userMessage = question ? { type: "user" as const, content: question, timestamp: new Date() } : null;
+    
+    setChatState({
+      currentView: "chat",
+      selectedDomain: selectedDomain,
+      messages: [
+        { type: "assistant", content: welcomes[selectedDomain] ?? "Bonjour, comment puis-je vous aider ?", timestamp: new Date() },
+        ...(userMessage ? [userMessage] : [])
+      ],
+      isProcessing: question ? true : false, // Marquer comme en cours de traitement si une question est posée
+    });
+    
+    scrollToChat();
+    
+    // Si une question est posée, la traiter automatiquement
+    if (question) {
+      try {
+        console.log('🚀 TRAITEMENT AUTOMATIQUE de la question:', question);
+        console.log('🚀 État du chat avant traitement:', {
+          selectedDomain: chatState.selectedDomain,
+          messagesCount: chatState.messages.length,
+          isProcessing: chatState.isProcessing
+        });
+        
+        // Passer le domaine directement à traiterQuestion
+        const response = await traiterQuestion(question, selectedDomain);
+        console.log('🚀 Réponse reçue:', response.substring(0, 200) + '...');
+        const assistantMessage: ChatMessage = { 
+          type: "assistant", 
+          content: response, 
+          timestamp: new Date() 
+        };
+        
+        setChatState(prev => ({
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+          isProcessing: false
+        }));
+      } catch (error) {
+        console.error('Erreur lors du traitement de la question:', error);
+        const errorMessage: ChatMessage = { 
+          type: "assistant", 
+          content: "Désolé, une erreur s'est produite lors du traitement de votre question. Veuillez réessayer.", 
+          timestamp: new Date() 
+        };
+        
+        setChatState(prev => ({
+          ...prev,
+          messages: [...prev.messages, errorMessage],
+          isProcessing: false
+        }));
+      }
+    } else {
+      setTimeout(() => inputRef.current?.focus(), 150);
+    }
+  };
+
   const handleDomainSelection = (domainId: number) => {
     // Si c'est le domaine "Recherche juridique" (ID 3), ouvrir le site externe
     if (domainId === 3) {
@@ -643,13 +905,14 @@ export default function App() {
     }
 
     const welcomes: Record<number, string> = {
-      0: "Bonjour ! Je peux vous aider avec vos questions sur les horaires, congés, ARTT, temps partiel, heures supplémentaires, absences, etc.",
-      1: "Bonjour ! Je peux vous renseigner sur le CPF, les congés de formation, la VAE, les concours, les bilans de compétences, etc. Quelle est votre question ?",
-      2: "Bonjour ! Je suis l'assistant spécialiste du télétravail. Posez-moi vos questions sur la charte, les jours autorisés, les indemnités, etc.",
-      4: "Bonjour ! Je suis votre juriste IA spécialisé dans la fonction publique. Je réponds exclusivement en me référant au site de Légifrance avec citations précises des textes légaux.",
-      6: "Bonjour ! Voici les actualités — vous pouvez poser une question ou consulter le fil d'actualité.",
-      7: "Bonjour ! Je peux vous aider à retrouver un chapitre du sommaire, ou une documentation interne (CET, congés, télétravail...).",
-      8: "Bonjour ! Espace dialogue social : je peux prendre note d'une demande ou vous orienter vers les contacts syndicaux.",
+      0: "Bonjour ! Je peux vous aider avec vos questions sur les horaires, congés, ARTT, temps partiel, heures supplémentaires, absences, etc.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      1: "Bonjour ! Je peux vous renseigner sur le CPF, les congés de formation, la VAE, les concours, les bilans de compétences, etc. Quelle est votre question ?\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      2: "Bonjour ! Je suis l'assistant spécialiste du télétravail. Posez-moi vos questions sur la charte, les jours autorisés, les indemnités, etc.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      4: "Bonjour ! Je suis votre juriste IA spécialisé dans la fonction publique. Je réponds exclusivement en me référant au site de Légifrance et au Code général de la fonction publique avec citations précises des textes légaux.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      6: "Bonjour ! Voici les actualités — vous pouvez poser une question ou consulter le fil d'actualité.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      7: "Bonjour ! Je peux vous aider à retrouver un chapitre du sommaire, ou une documentation interne (CET, congés, télétravail...).\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      8: "Bonjour ! Espace dialogue social : je peux prendre note d'une demande ou vous orienter vers les contacts syndicaux.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
+      9: "Bonjour ! Je suis l'assistant spécialiste du régime indemnitaire et des primes. Posez-moi vos questions sur le RIFSEEP, l'ISFE, les primes, indemnités, etc.\n\nSi ta prochaine question n'est pas dans ce thème, reviens à l'accueil.",
     };
     
     setChatState({
@@ -668,11 +931,56 @@ export default function App() {
     setSelectedInfo(null);
   };
 
-  const appelPerplexity = async (messages: any[]): Promise<string> => {
+
+  const appelPerplexity = async (messages: any[], disableWebSearch: boolean = false): Promise<string> => {
+    console.log('🔍 appelPerplexity appelé avec disableWebSearch:', disableWebSearch);
+    
+    // Pour les documents internes, utiliser l'API mais avec des paramètres stricts
+    if (disableWebSearch) {
+      console.log('🔒 UTILISATION DE L\'API AVEC PARAMÈTRES STRICTS pour les documents internes');
+      
+      const requestBody: any = { 
+        model: "sonar-pro",
+        messages,
+        search_domain_filter: [],
+        web_search: false,
+        return_images: false,
+        return_related_questions: false
+      };
+      
+      console.log('🔒 Paramètres API stricts appliqués:', {
+        search_domain_filter: [],
+        web_search: false
+      });
+      
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "sonar-pro", messages }),
+        body: JSON.stringify(requestBody),
+    });
+      
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Erreur API:", err);
+      throw new Error(`Erreur API (${response.status})`);
+    }
+      
+    const json = await response.json();
+      console.log('🔒 Réponse API reçue:', json.choices[0].message.content.substring(0, 200) + '...');
+    return json.choices[0].message.content;
+    }
+    
+    // Pour les autres domaines, utiliser l'API normale
+    console.log('🌐 UTILISATION DE L\'API NORMALE pour les autres domaines');
+    const requestBody: any = { 
+      model: "sonar-pro",
+      messages 
+    };
+    
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
     });
     if (!response.ok) {
       const err = await response.text();
@@ -683,90 +991,120 @@ export default function App() {
     return json.choices[0].message.content;
   };
 
-  const traiterQuestion = async (question: string): Promise<string> => {
+  const traiterQuestion = async (question: string, domain?: number): Promise<string> => {
+    const currentDomain = domain !== undefined ? domain : chatState.selectedDomain;
     console.log('🔍 traiterQuestion appelé avec:', { 
       question, 
-      selectedDomain: chatState.selectedDomain,
+      selectedDomain: currentDomain,
+      domainParam: domain,
       questionLength: question.length,
       questionWords: question.split(' ').length,
       isListening: isListening,
       interimText: interimText,
       inputValue: inputValue
     });
+    console.log('🔍 État complet du chat:', chatState);
     
     let contexte = "";
     let systemPrompt = "";
 
-    if (chatState.selectedDomain === 0) {
+    if (currentDomain === 0) {
       contexte = trouverContextePertinent(question);
       console.log('📚 Contexte trouvé pour domaine 0 (temps de travail):', { 
         contexteLength: contexte.length,
         contextePreview: contexte.substring(0, 200) + '...'
       });
-    } else if (chatState.selectedDomain === 1) {
+    } else if (currentDomain === 1) {
       contexte = JSON.stringify(formation, null, 2);
       console.log('📚 Contexte trouvé pour domaine 1 (formation):', { 
         contexteLength: contexte.length,
         contextePreview: contexte.substring(0, 200) + '...'
       });
-    } else if (chatState.selectedDomain === 2) {
+    } else if (currentDomain === 2) {
       contexte = teletravailData;
       console.log('📚 Contexte trouvé pour domaine 2 (télétravail):', { 
         contexteLength: contexte.length,
         contextePreview: contexte.substring(0, 200) + '...'
       });
+    } else if (currentDomain === 9) {
+      contexte = trouverContextePertinentPrimes(question);
+      console.log('📚 Contexte trouvé pour domaine 9 (primes):', { 
+        contexteLength: contexte.length,
+        contextePreview: contexte.substring(0, 200) + '...'
+      });
     }
 
-    // Pour le domaine 0, utiliser le processus normal avec trouverContextePertinent
-    if (chatState.selectedDomain === 0) {
-      console.log('⏰ UTILISATION DU PROCESSUS NORMAL (sommaire.ts + temps.ts) pour le domaine 0');
-      systemPrompt = `
-Tu es un collègue syndical spécialiste pour la mairie de Gennevilliers.
-Réponds uniquement en utilisant la documentation ci-dessous.
-Si la réponse n'est pas présente, dis : "Je ne trouve pas l'information. Contactez le 64 64."
-Réponds comme si tu parlais a un collegue que tu connais, et propose lui a la fin de contacter la CFDT au 01 40 85 64 64.
---- DOCUMENTATION ---
-${contexte}
---- FIN DOCUMENTATION ---
-      `;
-    }
 
-    // Pour les domaines 1 et 2, utiliser l'API Perplexity MAIS uniquement sur les données internes
-    if (chatState.selectedDomain === 1 || chatState.selectedDomain === 2) {
-      console.log('🔒 UTILISATION DE L\'API PERPLEXITY UNIQUEMENT SUR LES DONNÉES LOCALES pour le domaine:', chatState.selectedDomain);
+    // Pour tous les domaines de documents internes (0, 1, 2, 9), utiliser l'API MAIS uniquement sur les données internes
+    console.log('🔍 VÉRIFICATION DU DOMAINE:', {
+      currentDomain: currentDomain,
+      isDomain0: currentDomain === 0,
+      isDomain1: currentDomain === 1,
+      isDomain2: currentDomain === 2,
+      isDomain9: currentDomain === 9,
+      isInternalDoc: currentDomain === 0 || currentDomain === 1 || currentDomain === 2 || currentDomain === 9
+    });
+    
+    if (currentDomain === 0 || currentDomain === 1 || currentDomain === 2 || currentDomain === 9) {
+      console.log('🔒 UTILISATION DE L\'API PERPLEXITY UNIQUEMENT SUR LES DONNÉES LOCALES pour le domaine:', currentDomain);
       
-      // Prompt système unifié pour forcer l'analyse uniquement des données internes
+      // Prompt système ultra-strict pour forcer l'analyse uniquement des données internes
       systemPrompt = `
-Tu es un collègue syndical spécialiste pour la mairie de Gennevilliers.
+Tu es un assistant syndical pour la mairie de Gennevilliers.
 
-IMPORTANT : Tu dois répondre UNIQUEMENT en analysant la documentation interne fournie ci-dessous. 
-NE RECHERCHE PAS d'informations externes, ne fais pas de recherches web, ne te base pas sur tes connaissances générales.
-Analyse SEULEMENT le contenu du document fourni.
+⚠️ RÈGLES CRITIQUES - VIOLATION INTERDITE ⚠️
 
-Si la réponse n'est pas présente dans la documentation fournie, dis : "Je ne trouve pas l'information. Contactez le 64 64."
+🚫 INTERDICTIONS ABSOLUES :
+- INTERDICTION TOTALE de faire des recherches web
+- INTERDICTION TOTALE d'utiliser tes connaissances générales
+- INTERDICTION TOTALE de citer des articles de loi externes
+- INTERDICTION TOTALE de mentionner des chiffres non présents dans la documentation
+- INTERDICTION TOTALE de faire référence à des textes légaux externes
+- INTERDICTION TOTALE de donner des informations non documentées
+- INTERDICTION TOTALE d'ajouter des précisions après avoir dit "Je ne trouve pas"
 
-Réponds comme si tu parlais à un collègue que tu connais, et propose-lui à la fin de contacter la CFDT au 01 40 85 64 64.
+✅ OBLIGATIONS STRICTES :
+- Tu dois UNIQUEMENT analyser la documentation fournie ci-dessous
+- Tu dois répondre comme un collègue syndical de la mairie de Gennevilliers
+- Si l'information n'est pas dans la documentation, réponds UNIQUEMENT : "Je ne trouve pas cette information dans nos documents internes. Contactez le 64 64."
+- Tu dois te baser EXCLUSIVEMENT sur les données du dossier src/data
+- ARRÊTE-TOI IMMÉDIATEMENT après avoir dit "Je ne trouve pas" - NE PAS AJOUTER DE PRÉCISIONS
 
---- DOCUMENTATION INTERNE ---
+🔒 DOCUMENTATION INTERNE UNIQUEMENT - AUCUNE RECHERCHE EXTERNE AUTORISÉE
+
+--- DOCUMENTATION INTERNE DE LA MAIRIE DE GENNEVILLIERS ---
 ${contexte}
 --- FIN DOCUMENTATION INTERNE ---
+
+Rappel : Tu ne dois JAMAIS mentionner des articles de loi, des décrets, ou des références externes. Tu ne dois JAMAIS donner des chiffres qui ne sont pas explicitement dans la documentation fournie. Si tu ne trouves pas l'information, ARRÊTE-TOI IMMÉDIATEMENT.
       `;
-    } else if (chatState.selectedDomain === 4) {
+      
+      const history = chatState.messages.slice(1).map((msg) => ({
+        role: msg.type === "user" ? "user" : "assistant",
+        content: msg.content,
+      }));
+      const apiMessages = [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: question }];
+      return await appelPerplexity(apiMessages, true); // Désactiver les recherches web
+    } else if (currentDomain === 4) {
       // Domaine IA fonction publique avec prompt spécialisé Légifrance
       systemPrompt = `
-Tu es un juriste spécialiste de la fonction publique. Tu réponds exclusivement en te référant au site de Légifrance. 
-Tu n'inventes pas de réponse, et tu cites toujours soit la référence de la loi, du décret, soit la référence de la jurisprudence administrative.
+Tu es un juriste spécialiste de la fonction publique. Tu réponds exclusivement en te référant au site de Légifrance et au Code général de la fonction publique.
+
+SOURCES AUTORISÉES :
+1. Site Legifrance (https://www.legifrance.gouv.fr/)
+2. Code général de la fonction publique : https://www.legifrance.gouv.fr/download/pdf/legiOrKali?id=LEGITEXT000044416551.pdf&size=1,8%20Mo&pathToFile=/LEGI/TEXT/00/00/44/41/65/51/LEGITEXT000044416551/LEGITEXT000044416551.pdf&title=Code%20général%20de%20la%20fonction%20publique
+
+RÈGLES STRICTES :
+- Tu n'inventes pas de réponse
+- Tu cites toujours soit la référence de la loi, du décret, soit la référence de la jurisprudence administrative
+- Recherche prioritairement dans le Code général de la fonction publique pour les questions relatives à la fonction publique
+
 Format de réponse attendu :
 - Réponse précise basée sur les textes légaux
 - Citation systématique des références (ex: "Article L. 123-4 du Code général de la fonction publique", "Décret n° 2021-123 du...", "CE, 12 mars 2021, req. n° 123456")
-- Si tu ne trouves pas d'information précise sur Légifrance, indique clairement "Aucune référence trouvée sur Légifrance pour cette question spécifique"
+- Si tu ne trouves pas d'information précise sur Légifrance ou dans le Code général de la fonction publique, indique clairement "Aucune référence trouvée sur Légifrance pour cette question spécifique"
       `;
-    }
 
-
-    // Pour les domaines 0, 1, et 2, utiliser l'API Perplexity avec le prompt spécialisé pour les données internes
-    if (chatState.selectedDomain === 0 || chatState.selectedDomain === 1 || chatState.selectedDomain === 2) {
-      console.log('🔒 UTILISATION DE L\'API PERPLEXITY UNIQUEMENT SUR LES DONNÉES LOCALES pour le domaine:', chatState.selectedDomain);
       const history = chatState.messages.slice(1).map((msg) => ({
         role: msg.type === "user" ? "user" : "assistant",
         content: msg.content,
@@ -776,7 +1114,8 @@ Format de réponse attendu :
     }
 
     // Pour les autres domaines, utiliser l'API Perplexity normale
-    console.log('🌐 UTILISATION DE L\'API PERPLEXITY pour le domaine:', chatState.selectedDomain);
+    console.log('🌐 UTILISATION DE L\'API PERPLEXITY pour le domaine:', currentDomain);
+    console.log('❌ ERREUR: Ce domaine ne devrait pas utiliser l\'API externe!');
     const history = chatState.messages.slice(1).map((msg) => ({
       role: msg.type === "user" ? "user" : "assistant",
       content: msg.content,
@@ -902,81 +1241,133 @@ Format de réponse attendu :
   };
 
   return (
-    <div className="min-h-screen relative font-sans">
-      {/* Background */}
-      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0" style={{ backgroundImage: "url('./unnamed.jpg')" }} />
-      <div className="fixed inset-0 bg-black/10 z-0" />
+    <div className="min-h-screen relative font-sans overflow-hidden">
+      {/* Modern Animated Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900" />
+        <div className="absolute inset-0 bg-[url('./unnamed.jpg')] bg-cover bg-center opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        
+        {/* Animated floating particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white/30 rounded-full floating-particle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 10}s`,
+                animationDuration: `${15 + Math.random() * 10}s`
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Floating geometric shapes */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-xl animate-pulse" />
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-gradient-to-br from-green-500/20 to-teal-500/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
 
       {/* Podcast Player */}
       <PodcastPlayer />
 
-{/* Header */}
-<header 
-  className="relative shadow-lg border-b-4 border-orange-500 z-10 overflow-hidden"
-  style={{
-    backgroundImage: `url(${mairieImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  }}
->
-  {/* Overlay pour améliorer la lisibilité */}
-  <div className="absolute inset-0 bg-white/80 backdrop-blur-sm"></div>
+{/* Modern Header */}
+<header className="relative z-10 backdrop-blur-xl bg-white/10 border-b border-white/20 shadow-2xl">
+  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-purple-500/10" />
   
-  <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-6">
-    <div className="flex flex-col sm:flex-row items-center gap-6 flex-grow">
-      <div className="relative">
-        <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 via-red-400 to-orange-500 rounded-full blur-lg opacity-70 animate-pulse" />
-        <div className="relative p-6 bg-gradient-to-br from-white to-orange-50 rounded-full shadow-2xl">
-          <Users className="w-20 h-20 text-orange-500" />
+  <div className="relative max-w-7xl mx-auto px-6 py-4">
+    <div className="flex items-center justify-between">
+      {/* Left side - Brand */}
+      <div className="flex items-center space-x-6">
+        <div className="relative group">
+          <div className="absolute -inset-2 bg-gradient-to-r from-orange-400 to-red-500 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse" />
+          <div className="relative bg-white/20 backdrop-blur-xl rounded-2xl p-4 border border-white/30 shadow-xl">
+            <Users className="w-12 h-12 text-white" />
         </div>
       </div>
-      <div>
-        <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-orange-600 via-red-600 to-orange-700 bg-clip-text text-transparent drop-shadow-sm">
-          Atlas: Chatbot CFDT
+        
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-orange-100 to-red-100 bg-clip-text text-transparent drop-shadow-lg">
+            Atlas
         </h1>
-        <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          Mairie de GENNEVILLIERS
-        </h2>
-        <p className="mt-4 flex justify-center sm:justify-start items-center gap-2 text-lg text-gray-700">
-          <Users className="text-orange-500 w-5 h-5 animate-pulse" />
-          Assistant syndical CFDT pour les agents municipaux
+          <div className="flex items-center space-x-3">
+            <span className="text-lg font-semibold text-white/90">Chatbot CFDT</span>
+            <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+            <span className="text-sm text-white/70">Mairie de Gennevilliers</span>
+          </div>
+          <p className="text-sm text-white/80 flex items-center space-x-2">
+            <Shield className="w-4 h-4" />
+            <span>Assistant syndical intelligent</span>
         </p>
       </div>
     </div>
-    <div className="relative shrink-0 w-40 h-40 sm:w-48 sm:h-48">
-      {/* Halo orange autour du cercle */}
-      <div className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(255,165,0,0.9)] animate-pulse"></div>
-      {/* Cercle blanc de fond */}
-      <div className="absolute inset-0 bg-white rounded-full"></div>
-      {/* Logo CFDT rempli dans le cercle */}
+      
+      {/* Right side - Logo */}
+      <div className="relative group">
+        <div className="absolute -inset-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition duration-500 animate-pulse" />
+        <div className="relative w-20 h-20 bg-white backdrop-blur-xl rounded-full border-2 border-white/30 shadow-2xl overflow-hidden">
       <img
         src="./logo-cfdt.jpg"
         alt="Logo CFDT"
-        className="relative w-full h-full object-cover rounded-full"
-      />
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    </div>
+    
+    {/* Status bar */}
+    <div className="mt-3 flex items-center justify-between">
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-2 text-white/80">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+          <span className="text-sm">Système opérationnel</span>
+        </div>
+        <div className="flex items-center space-x-2 text-white/80">
+          <Zap className="w-4 h-4" />
+          <span className="text-sm">IA activée</span>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        <div className="text-right">
+          <div className="text-sm text-white/80">Assistant disponible</div>
+          <div className="text-xs text-white/60">24/7 pour les agents</div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
       
-      {/* Main */}
-      <main className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 z-10">
+      {/* Main Content */}
+      <main className="relative max-w-7xl mx-auto px-6 py-12 z-10">
         {chatState.currentView === "menu" ? (
           <>
-            {/* Bandeau défilant custom (NEWS FTP:) */}
-            <section className="relative bg-orange-300 text-black overflow-hidden mx-auto max-w-5xl rounded-2xl shadow-lg z-10">
-              <div className="relative h-20 flex items-center overflow-hidden">
-                <div className="absolute left-0 top-0 h-full w-40 flex items-center justify-center bg-orange-400 z-20 shadow-md">
-                  <span className="text-2xl font-bold">NEWS FPT:</span>
+            {/* Modern News Ticker */}
+            <section className="relative mb-12 overflow-hidden rounded-3xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-purple-500/20" />
+              <div className="relative h-24 flex items-center overflow-hidden">
+                <div className="absolute left-0 top-0 h-full w-48 flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 z-20 shadow-xl">
+                  <div className="flex items-center space-x-3">
+                    <TrendingUp className="w-6 h-6 text-white" />
+                    <span className="text-xl font-bold text-white">NEWS FPT</span>
                 </div>
-                <div className="animate-marquee whitespace-nowrap flex items-center pl-44" style={{ animation: "marquee 30s linear infinite" }}>
+                </div>
+                <div className="animate-marquee whitespace-nowrap flex items-center pl-52" style={{ animation: "marquee 40s linear infinite" }}>
                   {[...infoItems, ...infoItems].map((info, idx) => (
                     <button
                       key={`${info.id}-${idx}`}
                       onClick={() => setSelectedInfo(info)}
-                      className="text-2xl font-medium mx-8 hover:text-blue-200 transition-colors underline decoration-dotted cursor-pointer"
+                      className="group mx-8 text-white/90 hover:text-white transition-all duration-300 flex items-center space-x-3"
                     >
-                      #{info.id}: {info.title}
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                        {info.id}
+                      </div>
+                      <span className="text-lg font-medium underline decoration-dotted decoration-white/50 group-hover:decoration-white transition-all">
+                        {info.title}
+                      </span>
+                      <ChevronRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                     </button>
                   ))}
                 </div>
@@ -991,134 +1382,227 @@ Format de réponse attendu :
               }} />
             </section>
 
-            {/* Détail info */}
+            {/* Modern Info Detail Modal */}
             {selectedInfo && (
-              <section className="info-detail bg-white/95 backdrop-blur-sm p-6 rounded-lg shadow-md mt-8 max-w-4xl mx-auto">
-                <h3 className="text-xl font-bold mb-4">{selectedInfo.title}</h3>
-                <p className="whitespace-pre-wrap">{selectedInfo.content}</p>
-                <button onClick={() => setSelectedInfo(null)} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                  Fermer
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedInfo(null)} />
+                <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 max-w-4xl w-full max-h-[80vh] overflow-hidden">
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                          <Info className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white">{selectedInfo.title}</h3>
+                      </div>
+                      <button 
+                        onClick={() => setSelectedInfo(null)}
+                        className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200"
+                      >
+                        <X className="w-6 h-6 text-white" />
                 </button>
-              </section>
+                    </div>
+                  </div>
+                  <div className="p-8 overflow-y-auto max-h-[60vh]">
+                    <div className="prose prose-lg max-w-none">
+                      <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">{selectedInfo.content}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
-            {/* Choix domaine */}
-            <section className="text-center my-12">
-            <h3 className="text-white text-xl sm:text-2xl font-bold mb-4 text-center">
+            {/* Modern Section Title */}
+            <section className="text-center mb-16">
+              <div className="inline-flex items-center space-x-4 mb-6">
+                <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-orange-400 to-transparent"></div>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-orange-100 to-red-100 bg-clip-text text-transparent">
   Choisissez votre domaine d'assistance
-</h3>
-              <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-                Nos assistants IA spécialisés vous aideront.
-              </p>
+                </h2>
+                <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-orange-400 to-transparent"></div>
+              </div>
             </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              <button
-                onClick={() => handleDomainSelection(0)}
-                className="group relative overflow-hidden bg-white/95 border-2 border-orange-200 rounded-3xl p-8 transition-all duration-500 hover:border-orange-400 hover:shadow-2xl hover:-translate-y-2"
-              >
-                <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="relative p-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl shadow-xl group-hover:rotate-3 group-hover:scale-110 transition-transform">
-                    <Clock className="w-12 h-12 text-white" />
+            {/* Modern Documents Internes Section */}
+            <div className="mb-16">
+              <div className="group relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl transition-all duration-500 hover:bg-white/15 hover:shadow-3xl hover:-translate-y-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <div className="relative p-12">
+                  <div className="flex flex-col lg:flex-row items-center gap-12">
+                    {/* Left side - Icon and info */}
+                    <div className="flex-shrink-0 text-center lg:text-left">
+                      <div className="relative group/icon">
+                        <div className="absolute -inset-4 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-3xl blur-xl opacity-60 group-hover/icon:opacity-80 transition-all duration-300" />
+                        <div className="relative p-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-2xl group-hover/icon:scale-110 group-hover/icon:rotate-3 transition-all duration-300 text-center">
+                          <FileText className="w-16 h-16 text-white mb-4 mx-auto" />
+                          <h3 className="text-2xl font-bold text-white mb-4">Documents Internes</h3>
+                          <div className="space-y-2">
+                            <div className="text-white/95 text-xs font-medium">⏰ Temps de travail</div>
+                            <div className="text-white/95 text-xs font-medium">🎓 Formation</div>
+                            <div className="text-white/95 text-xs font-medium">🏠 Télétravail</div>
+                            <div className="text-white/95 text-xs font-medium">💰 Primes</div>
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-800 group-hover:text-orange-700">  Temps de Travail      (Doc Interne)</h4>
-              
-                  <p className="text-center text-gray-600">Horaires, congés, ARTT, temps partiel, absences…</p>
+                        </div>
+                      </div>
                 </div>
-              </button>
+                  
+                    {/* Right side - Search interface */}
+                    <div className="flex-1 w-full max-w-2xl">
+                      <div className="space-y-6">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-2xl blur-lg" />
+                          <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                            <div className="flex items-center space-x-3 mb-4">
+                              <Search className="w-5 h-5 text-white/80" />
+                              <span className="text-white/90 font-medium">Recherche intelligente</span>
+                            </div>
+                            
+                            <div className="flex gap-3">
+                              <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={internalDocQuestion}
+                        onChange={(e) => setInternalDocQuestion(e.target.value)}
+                                  placeholder="Posez votre question sur nos documents internes..."
+                                  className="w-full px-4 py-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                        onKeyPress={async (e) => {
+                          if (e.key === 'Enter' && internalDocQuestion.trim()) {
+                            await handleInternalDocSelection(internalDocQuestion.trim());
+                            setInternalDocQuestion("");
+                          }
+                        }}
+                      />
+                              </div>
+              <button
+                        onClick={async () => {
+                          if (internalDocQuestion.trim()) {
+                            await handleInternalDocSelection(internalDocQuestion.trim());
+                            setInternalDocQuestion("");
+                          } else {
+                            await handleInternalDocSelection();
+                          }
+                        }}
+                                className="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      >
+                                <Send className="w-5 h-5" />
+                        {internalDocQuestion.trim() ? "Poser" : "Ouvrir"}
+                      </button>
+                  </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                  </div>
+                </div>
+            </div>
 
-              <button
-                onClick={() => handleDomainSelection(1)}
-                className="group relative overflow-hidden bg-white/95 border-2 border-purple-200 rounded-3xl p-8 transition-all duration-500 hover:border-purple-400 hover:shadow-2xl hover:-translate-y-2"
-              >
-                <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="relative p-6 bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl shadow-xl group-hover:rotate-3 group-hover:scale-110 transition-transform">
-                    <GraduationCap className="w-12 h-12 text-white" />
-                  </div>
-                  <h4 className="text-2xl font-bold text-gray-800 group-hover:text-purple-700">Formation (Doc Interne )</h4>
-                  <p className="text-center text-gray-600">CPF, VAE, concours, bilans de compétences…</p>
-                </div>
-              </button>
-              
-              <button
-                onClick={() => handleDomainSelection(2)}
-                className="group relative overflow-hidden bg-white/95 border-2 border-green-200 rounded-3xl p-8 transition-all duration-500 hover:border-green-400 hover:shadow-2xl hover:-translate-y-2"
-              >
-                <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="relative p-6 bg-gradient-to-br from-green-500 to-teal-600 rounded-3xl shadow-xl group-hover:rotate-3 group-hover:scale-110 transition-transform">
-                    <Home className="w-12 h-12 text-white" />
-                  </div>
-                  <h4 className="text-2xl font-bold text-gray-800 group-hover:text-green-700">Télétravail (Doc Interne)</h4>
-                  <p className="text-center text-gray-600">Charte, jours autorisés, indemnités, modalités…</p>
-                </div>
-              </button>
-
+            {/* Modern Services Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+              {/* Recherche Juridique */}
               <button
                 onClick={() => handleDomainSelection(3)}
-                className="group relative overflow-hidden bg-white/95 border-2 border-amber-200 rounded-3xl p-8 transition-all duration-500 hover:border-amber-400 hover:shadow-2xl hover:-translate-y-2"
+                className="group relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 transition-all duration-500 hover:bg-white/15 hover:shadow-3xl hover:-translate-y-2"
               >
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
                 <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="relative p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl shadow-xl group-hover:rotate-3 group-hover:scale-110 transition-transform">
-                    <Scale className="w-12 h-12 text-white" />
-                  </div>
-                  <h4 className="text-2xl font-bold text-gray-800 group-hover:text-amber-700">Recherche juridique  (Doc Externe)
+                  <div className="relative group/icon">
+                    <div className="absolute -inset-3 bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl blur-lg opacity-60 group-hover/icon:opacity-80 transition-all duration-300" />
+                    <div className="relative p-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-xl group-hover/icon:scale-110 group-hover/icon:rotate-3 transition-all duration-300 text-center">
+                      <Scale className="w-12 h-12 text-white mb-4 mx-auto" />
+                      <h4 className="text-xl font-bold text-white mb-3">
+                        Recherche Juridique
                   </h4>
-                  <p className="text-center text-gray-600">Accès direct à la base de données juridique administrative…</p>
+                      <p className="text-white/90 text-sm leading-relaxed max-w-xs">
+                        Accès direct à la base de données juridique administrative
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center text-amber-400 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <span className="text-sm font-medium">Accéder</span>
+                    <ChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </button>
 
+              {/* IA Fonction Publique */}
               <button
                 onClick={() => handleDomainSelection(4)}
-                className="group relative overflow-hidden bg-white/95 border-2 border-indigo-200 rounded-3xl p-8 transition-all duration-500 hover:border-indigo-400 hover:shadow-2xl hover:-translate-y-2"
+                className="group relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 transition-all duration-500 hover:bg-white/15 hover:shadow-3xl hover:-translate-y-2"
               >
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
                 <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="relative p-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl shadow-xl group-hover:rotate-3 group-hover:scale-110 transition-transform">
-                    <Bot className="w-12 h-12 text-white" />
+                  <div className="relative group/icon">
+                    <div className="absolute -inset-3 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-2xl blur-lg opacity-60 group-hover/icon:opacity-80 transition-all duration-300" />
+                    <div className="relative p-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl group-hover/icon:scale-110 group-hover/icon:rotate-3 transition-all duration-300 text-center">
+                      <Bot className="w-12 h-12 text-white mb-4 mx-auto" />
+                      <h4 className="text-xl font-bold text-white mb-3">
+                        IA Fonction Publique
+                      </h4>
+                      <p className="text-white/90 text-sm leading-relaxed max-w-xs">
+                        Juriste IA avec références Légifrance précises
+                      </p>
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-800 group-hover:text-indigo-700">IA fonction publique  (Doc Externe)</h4>
-                  <p className="text-center text-gray-600">Juriste IA avec références Légifrance précises…</p>
+                  </div>
+                  
+                  <div className="flex items-center text-indigo-400 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <span className="text-sm font-medium">Accéder</span>
+                    <ChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </button>
 
+              {/* FAQ */}
               <button
                 onClick={() => handleDomainSelection(5)}
-                className="group relative overflow-hidden bg-white/95 border-2 border-rose-200 rounded-3xl p-8 transition-all duration-500 hover:border-rose-400 hover:shadow-2xl hover:-translate-y-2"
+                className="group relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 transition-all duration-500 hover:bg-white/15 hover:shadow-3xl hover:-translate-y-2"
               >
+                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
                 <div className="relative z-10 flex flex-col items-center gap-6">
-                  <div className="relative p-6 bg-gradient-to-br from-rose-500 to-pink-600 rounded-3xl shadow-xl group-hover:rotate-3 group-hover:scale-110 transition-transform">
-                    <HelpCircle className="w-12 h-12 text-white" />
+                  <div className="relative group/icon">
+                    <div className="absolute -inset-3 bg-gradient-to-br from-rose-400 to-pink-600 rounded-2xl blur-lg opacity-60 group-hover/icon:opacity-80 transition-all duration-300" />
+                    <div className="relative p-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-xl group-hover/icon:scale-110 group-hover/icon:rotate-3 transition-all duration-300 text-center">
+                      <HelpCircle className="w-12 h-12 text-white mb-4 mx-auto" />
+                      <h4 className="text-xl font-bold text-white mb-3">
+                        FAQ
+                      </h4>
+                      <p className="text-white/90 text-sm leading-relaxed max-w-xs">
+                        Questions fréquentes sur télétravail et formation
+                      </p>
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-800 group-hover:text-rose-700">FAQ</h4>
-                  <p className="text-center text-gray-600">Questions fréquentes sur télétravail et formation…</p>
+                  </div>
+                  
+                  <div className="flex items-center text-rose-400 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <span className="text-sm font-medium">Consulter</span>
+                    <ChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </button>
-
-              {/* ======================
-                  NOUVEAUX : 3 icônes
-                 ====================== */}
-          
-
-
             </div>
             
-            {/* Bloc actus (RSS) - EN BAS */}
-            <div 
-              className="border-2 border-blue-200 rounded-3xl p-8 mt-8 relative overflow-hidden"
-              style={{
-                backgroundImage: `url(${mairieImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            >
-              {/* Overlay pour améliorer la lisibilité */}
-              <div className="absolute inset-0 bg-white/60"></div>
+            {/* Modern News Section */}
+            <div className="relative overflow-hidden backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10" />
               
-              <div className="relative z-10 flex flex-col items-center gap-6">
-                <div className="relative p-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-xl">
-                  <Sparkles className="w-12 h-12 text-white" />
+              <div className="relative p-12">
+                <div className="text-center mb-8">
+                  <div className="relative inline-block">
+                    <div className="absolute -inset-4 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-3xl blur-xl opacity-60 animate-pulse" />
+                    <div className="relative p-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-2xl text-center">
+                      <Sparkles className="w-16 h-16 text-white mb-4 mx-auto" />
+                      <h3 className="text-2xl font-bold text-white mb-3">Actualités Nationales</h3>
+                      <p className="text-white/90 text-sm leading-relaxed max-w-md mx-auto">
+                        Restez informé des dernières actualités de la fonction publique territoriale
+                      </p>
                 </div>
-                <h4 className="text-2xl font-bold text-gray-800 text-blue-700">Actualités Nationales</h4>
+                  </div>
+                </div>
+                
                 <div className="w-full">
                   <NewsTicker />
                 </div>
@@ -1128,15 +1612,28 @@ Format de réponse attendu :
         ) : chatState.currentView === "faq" ? (
           <FAQSection onReturn={returnToMenu} />
         ) : (
-          // Vue Chat
-          <div ref={chatContainerRef} className="bg-white/95 rounded-3xl shadow-2xl border border-gray-200 overflow-hidden backdrop-blur-sm">
-            <div className="bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button onClick={returnToMenu} className="text-white hover:text-orange-200 p-2 rounded-full hover:bg-white/10">
-                  <ArrowLeft className="w-6 h-6" />
+          // Modern Chat Interface
+          <div ref={chatContainerRef} className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <button 
+                    onClick={returnToMenu} 
+                    className="text-white hover:text-orange-200 p-3 rounded-full hover:bg-white/10 transition-all duration-200 group"
+                  >
+                    <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
                 </button>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute -inset-2 bg-white/20 rounded-full blur-lg opacity-50" />
+                      <div className="relative w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    
                 <div>
-                  <h3 className="text-xl font-bold text-white">
+                      <h3 className="text-2xl font-bold text-white">
                     {chatState.selectedDomain === 0 && "Assistant Temps de Travail"}
                     {chatState.selectedDomain === 1 && "Assistant Formation"}
                     {chatState.selectedDomain === 2 && "Assistant Télétravail"}
@@ -1146,37 +1643,73 @@ Format de réponse attendu :
                     {chatState.selectedDomain === 6 && "Actualités"}
                     {chatState.selectedDomain === 7 && "Documentation"}
                     {chatState.selectedDomain === 8 && "Dialogue social"}
+                    {chatState.selectedDomain === 9 && "Assistant PRIMES"}
                   </h3>
-                  <p className="text-orange-100 text-sm">Posez vos questions, je suis là pour vous aider</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                        <p className="text-orange-100 text-sm">Assistant en ligne - Prêt à vous aider</p>
                 </div>
               </div>
-              <Users className="w-8 h-8 text-white" />
+                  </div>
             </div>
 
-            <div className="h-[60vh] overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-white/90 text-sm font-medium">CFDT Gennevilliers</div>
+                    <div className="text-orange-200 text-xs">Support syndical</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-[45vh] sm:h-[50vh] md:h-[60vh] overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-white/5 to-white/10">
               {chatState.messages.map((msg, i) => (
-                <div key={i} className={`flex items-end gap-2 ${msg.type === "user" ? "justify-end" : "justify-start"}`}>
-                   {msg.type === 'assistant' && <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0">CFDT</div>}
-                  <div className={`flex ${msg.type === "user" ? "flex-row-reverse" : "flex-row"} items-start gap-4`}>
+                <div key={i} className={`flex items-end gap-3 ${msg.type === "user" ? "justify-end" : "justify-start"}`}>
+                  {msg.type === 'assistant' && (
+                    <div className="relative">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full blur opacity-50" />
+                      <div className="relative w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white flex items-center justify-center shrink-0 text-sm font-bold shadow-lg">
+                        CFDT
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className={`flex ${msg.type === "user" ? "flex-row-reverse" : "flex-row"} items-start gap-4 max-w-4xl`}>
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-md ${
+                      className={`relative max-w-[80%] px-6 py-4 rounded-3xl shadow-lg backdrop-blur-sm ${
                         msg.type === "user"
-                          ? "bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-br-none"
-                          : "bg-white border border-gray-200 text-gray-800 rounded-bl-none"
+                          ? "bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-br-lg"
+                          : "bg-white/90 border border-white/20 text-gray-800 rounded-bl-lg"
                       }`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                      <p className="text-xs mt-2 opacity-70 text-right">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-3xl opacity-50" />
+                      <div className="relative">
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                        <div className={`flex items-center gap-2 mt-3 text-xs ${
+                          msg.type === "user" ? "text-white/70 justify-end" : "text-gray-500"
+                        }`}>
+                          <span>{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {msg.type === 'assistant' && (
+                            <div className="flex items-center gap-1">
+                              <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
+                              <span>En ligne</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     
                     {/* Afficher le GIF manga seulement pour le premier message de l'assistant */}
                     {i === 0 && msg.type === 'assistant' && (
-                      <div className="hidden md:block ml-12 -mt-16">
+                      <div className="hidden lg:block ml-8 -mt-16">
+                        <div className="relative">
+                          <div className="absolute -inset-4 bg-gradient-to-r from-orange-400 to-red-500 rounded-3xl blur-xl opacity-30 animate-pulse" />
                         <img 
                           src="./cfdtmanga.gif" 
                           alt="CFDT Manga" 
-                          className="w-96 h-96 object-contain"
+                            className="relative w-80 h-80 object-contain rounded-2xl shadow-2xl"
                         />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1184,11 +1717,20 @@ Format de réponse attendu :
               ))}
 
               {chatState.isProcessing && (
-                <div className="flex items-end gap-2 justify-start">
-                  <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0">CFDT</div>
-                  <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-md rounded-bl-none">
-                    <div className="flex items-center space-x-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                <div className="flex items-end gap-3 justify-start">
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full blur opacity-50 animate-pulse" />
+                    <div className="relative w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white flex items-center justify-center shrink-0 text-sm font-bold shadow-lg">
+                      CFDT
+                    </div>
+                  </div>
+                  <div className="relative max-w-[80%] px-6 py-4 rounded-3xl shadow-lg backdrop-blur-sm bg-white/90 border border-white/20 rounded-bl-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
                       <span className="text-sm text-gray-600">L'assistant réfléchit...</span>
                     </div>
                   </div>
@@ -1199,20 +1741,29 @@ Format de réponse attendu :
               
               {/* Indicateur de reconnaissance vocale en cours */}
               {isListening && interimText && (
-                <div className="flex items-end gap-2 justify-start mb-4">
-                  <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 animate-pulse">
+                <div className="flex items-end gap-3 justify-start">
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur opacity-50 animate-pulse" />
+                    <div className="relative w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white flex items-center justify-center shrink-0 text-sm font-bold shadow-lg">
                     🎤
                   </div>
-                  <div className="bg-blue-100 border border-blue-300 rounded-2xl px-4 py-3 shadow-md rounded-bl-none max-w-xs lg:max-w-md">
+                  </div>
+                  <div className="relative max-w-[80%] px-6 py-4 rounded-3xl shadow-lg backdrop-blur-sm bg-blue-100/90 border border-blue-300/30 rounded-bl-lg">
                     <p className="text-sm text-blue-800 italic">{interimText}</p>
-                    <p className="text-xs mt-1 text-blue-600">En cours d'écoute...</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />
+                      <p className="text-xs text-blue-600">En cours d'écoute...</p>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="p-4 bg-gray-50/80 border-t border-gray-200 backdrop-blur-sm">
-              <div className="flex items-center space-x-2">
+            <div className="p-6 bg-white/10 backdrop-blur-xl border-t border-white/20">
+              <div className="flex items-center gap-4">
+                <div className="flex-1 relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-2xl blur-lg opacity-50" />
+                  <div className="relative">
                 <input
                   ref={inputRef}
                   type="text"
@@ -1220,18 +1771,22 @@ Format de réponse attendu :
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Tapez votre question ici..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      className="w-full px-6 py-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all text-base"
                   disabled={chatState.isProcessing}
                 />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
                 <button
                   onClick={toggleListening}
                   disabled={chatState.isProcessing || !speechSupported}
-                  className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center shadow-lg ${
+                    className={`relative p-4 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg group ${
                     !speechSupported
-                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        ? 'bg-gray-500/50 text-gray-300 cursor-not-allowed'
                       : isListening 
-                        ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' 
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                          ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white animate-pulse hover:from-red-600 hover:to-pink-700' 
+                          : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 hover:scale-105'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                   title={
                     !speechSupported 
@@ -1241,8 +1796,10 @@ Format de réponse attendu :
                         : "Parler"
                   }
                 >
-                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                    <div className="absolute -inset-1 bg-white/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {isListening ? <MicOff className="w-5 h-5 relative" /> : <Mic className="w-5 h-5 relative" />}
                 </button>
+                  
                 <button
                   onClick={() => {
                     console.log('🔘 ENVOI MANUEL (BOUTON):', inputValue);
@@ -1254,70 +1811,155 @@ Format de réponse attendu :
                     handleSendMessage();
                   }}
                   disabled={!inputValue.trim() || chatState.isProcessing}
-                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-3 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                    className="relative p-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg group hover:scale-105"
                 >
-                  <Send className="w-5 h-5" />
+                    <div className="absolute -inset-1 bg-white/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Send className="w-5 h-5 relative" />
                 </button>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between mt-4 text-sm text-white/70">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                    <span>Assistant disponible</span>
+                  </div>
+                  {speechSupported && (
+                    <div className="flex items-center gap-2">
+                      <Mic className="w-4 h-4" />
+                      <span>Reconnaissance vocale activée</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-white/50">
+                  Appuyez sur Entrée pour envoyer
+                </div>
               </div>
             </div>
           </div>
         )}
       </main>
 
-{/* Footer */}
-<footer className="relative bg-gray-900 text-white py-12 z-10">
-  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+{/* Modern Footer */}
+<footer className="relative backdrop-blur-xl bg-white/10 border-t border-white/20 py-6 z-10">
+  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-red-500/5 to-purple-500/5" />
+  
+  <div className="relative max-w-7xl mx-auto px-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* Contact CFDT */}
       <div className="text-center md:text-left">
-        <h4 className="text-xl font-bold mb-4 bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <h4 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
           Contact CFDT
         </h4>
-        <div className="space-y-3">
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <Phone className="w-5 h-5 text-orange-400" />
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-center md:justify-start gap-3 text-white/80 hover:text-white transition-colors">
+            <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+              <Phone className="w-4 h-4 text-orange-400" />
+            </div>
             <span>01 40 85 64 64</span>
           </div>
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <Mail className="w-5 h-5 text-orange-400" />
+          <div className="flex items-center justify-center md:justify-start gap-3 text-white/80 hover:text-white transition-colors">
+            <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+              <Mail className="w-4 h-4 text-orange-400" />
+            </div>
             <a
               href="mailto:cfdt-interco@ville-gennevilliers.fr"
-              className="text-white hover:underline"
+              className="hover:text-orange-300 transition-colors"
             >
               cfdt-interco@ville-gennevilliers.fr
             </a>
           </div>
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <MapPin className="w-5 h-5 text-orange-400" />
+          <div className="flex items-center justify-center md:justify-start gap-3 text-white/80">
+            <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-orange-400" />
+            </div>
             <span>Mairie de Gennevilliers</span>
           </div>
         </div>
       </div>
+      
+      {/* Services */}
       <div className="text-center">
-        <h4 className="text-xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+            <Shield className="w-5 h-5 text-white" />
+          </div>
+          <h4 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
           Services
         </h4>
-        <ul className="space-y-2 text-gray-300">
-          <li>Santé</li>
-          <li>Retraite</li>
-          <li>Juridique</li>
-          <li>Accompagnement syndical</li>
+        </div>
+        <ul className="space-y-3 text-white/80">
+          <li className="flex items-center justify-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-400" />
+            <span>Santé</span>
+          </li>
+          <li className="flex items-center justify-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-400" />
+            <span>Retraite</span>
+          </li>
+          <li className="flex items-center justify-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-400" />
+            <span>Juridique</span>
+          </li>
+          <li className="flex items-center justify-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-400" />
+            <span>Accompagnement syndical</span>
+          </li>
         </ul>
       </div>
+      
+      {/* Horaires */}
       <div className="text-center md:text-right">
-        <h4 className="text-xl font-bold mb-4 bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+        <div className="flex items-center justify-center md:justify-end gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center">
+            <Clock className="w-5 h-5 text-white" />
+          </div>
+          <h4 className="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
           Horaires
         </h4>
-        <div className="space-y-2 text-gray-300">
-          <div>Lundi - Vendredi</div>
-          <div className="font-semibold text-white">9h00-12h00- 13h30-17h00</div>
-          <div className="text-sm">Permanences sur RDV</div>
+        </div>
+        <div className="space-y-3 text-white/80">
+          <div className="text-lg font-medium text-white">Lundi - Vendredi</div>
+          <div className="text-xl font-bold text-white bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+            9h00-12h00 / 13h30-17h00
+      </div>
+          <div className="text-sm text-white/60">Permanences sur RDV</div>
+          <div className="flex items-center justify-center md:justify-end gap-2 mt-4">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-sm text-green-300">Ouvert maintenant</span>
+    </div>
         </div>
       </div>
     </div>
-    <div className="border-t border-gray-700 mt-10 pt-6 text-center">
-      <p className="text-gray-400">
-        © 2025 CFDT Gennevilliers - Assistant IA pour les agents municipaux
-      </p>
+    
+    <div className="border-t border-white/20 mt-6 pt-4">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="text-white/80">
+            © 2025 CFDT Gennevilliers
+          </div>
+          <div className="w-1 h-1 bg-white/40 rounded-full" />
+          <div className="text-white/60">
+            Assistant IA pour les agents municipaux
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 text-white/70">
+            <Zap className="w-4 h-4 text-orange-400" />
+            <span className="text-sm">Powered by AI</span>
+          </div>
+          <div className="flex items-center gap-2 text-white/70">
+            <Shield className="w-4 h-4 text-green-400" />
+            <span className="text-sm">Sécurisé</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </footer>
