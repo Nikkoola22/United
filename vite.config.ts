@@ -12,5 +12,5 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  base: '/ATLAS/',
+  base: '/United/',
 });
