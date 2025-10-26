@@ -1,0 +1,40 @@
+name: Deploy Vite App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # ou main selon ton repo
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout du repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Installer Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Installer les dépendances (npm install au lieu de npm ci)
+      - name: Install dependencies
+        run: npm install
+
+      # 4️⃣ Build du projet
+      - name: Build project for GitHub Pages
+        run: |
+          export GITHUB_PAGES=true   # active base '/ATLAS/' dans vite.config.ts
+          npm run build
+
+      # 5️⃣ Déployer sur GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.atlas }}   # NOM exact du secret PAT
+          publish_dir: ./dist
+          force_orphan: true                    # branche gh-pages propre
+          commit_message: "Deploy via GitHub Actions"
