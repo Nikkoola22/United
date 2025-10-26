@@ -236,8 +236,8 @@ function App() {
       try {
         setRssLoading(true)
         
-        // Utiliser le backend proxy Node.js (port 3001)
-        const response = await fetch('http://localhost:3001/api/rss')
+        // Utiliser le proxy Vite qui redirige vers le serveur Express
+        const response = await fetch('/api/rss')
         
         if (!response.ok) {
           console.warn(`Erreur backend: ${response.status}`)
