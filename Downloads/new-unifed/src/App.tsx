@@ -12,6 +12,7 @@ import { ifse1Data, getAllDirections, getIFSE2ByDirection, getDirectionFullName 
 import { franceInfoRss } from "./data/rss-data.ts"
 import AdminPanel from "./components/AdminPanel.tsx"
 import CalculateurCIA from "./components/CalculateurCIA.tsx"
+import { faqData } from "./data/FAQdata.ts"
 
 
 // --- CONFIGURATION API PERPLEXITY ---
@@ -36,7 +37,7 @@ interface InfoItem {
   content: string
 }
 interface ChatbotState {
-  currentView: "menu" | "chat" | "calculators"
+  currentView: "menu" | "chat" | "calculators" | "faq"
   selectedDomain: number | null
   messages: ChatMessage[]
   isProcessing: boolean
@@ -599,11 +600,50 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                     </div>
                   </button>
                 </div>
+                {/* Petit bouton Questions fréquentes sous les deux icônes */}
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={() => setChatState({ ...chatState, currentView: 'faq' })}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 rounded-full text-sm font-medium shadow hover:from-amber-600 hover:to-amber-700 transition"
+                  >
+                    Questions fréquentes
+                  </button>
+                </div>
               </div>
             </div>
           </>
         )}
       </main>
+
+      {/* --- PAGE FAQ --- */}
+      {chatState.currentView === 'faq' && (
+        <main className="relative max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 z-10">
+          <section className="max-w-4xl mx-auto bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-purple-500/20 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-light text-white">Questions fréquentes</h2>
+              <button
+                onClick={() => setChatState({ ...chatState, currentView: 'menu' })}
+                className="px-3 py-1 bg-slate-700/60 text-slate-200 rounded hover:bg-slate-700/80 transition text-sm"
+              >
+                Retour
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/** lazy import data **/}
+              {/** We import at top-level to keep it simple */}
+              { /* eslint-disable-next-line @typescript-eslint/no-var-requires */ }
+              {/** Render FAQ items from faqData */}
+              {faqData.map((item: any) => (
+                <details key={item.id} className="bg-slate-700/30 p-4 rounded-lg border border-slate-600/20">
+                  <summary className="cursor-pointer text-white font-medium">{item.question}</summary>
+                  <div className="mt-2 text-slate-300 whitespace-pre-line">{item.answer}</div>
+                </details>
+              ))}
+            </div>
+          </section>
+        </main>
+      )}
 
       {/* --- SECTION CALCULATEURS FULL-WIDTH --- */}
       {chatState.currentView === 'calculators' && (
