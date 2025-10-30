@@ -642,7 +642,10 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                 >
                   <summary className="cursor-pointer text-white font-medium flex items-center justify-between gap-4">
                     <span className="truncate">{item.question}</span>
-                    <span className="faq-arrow text-slate-400 transition-transform duration-200">▾</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`faq-badge text-sm font-medium px-2 py-0.5 rounded-full text-white`}>{item.category.replace('-', ' ')}</span>
+                      <span className="faq-arrow text-slate-400 transition-transform duration-200">▾</span>
+                    </div>
                   </summary>
                   <div className="mt-2 text-slate-300 whitespace-pre-line">{item.answer}</div>
                 </details>
