@@ -635,8 +635,15 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
               { /* eslint-disable-next-line @typescript-eslint/no-var-requires */ }
               {/** Render FAQ items from faqData */}
               {faqData.map((item: any) => (
-                <details key={item.id} className="bg-slate-700/30 p-4 rounded-lg border border-slate-600/20">
-                  <summary className="cursor-pointer text-white font-medium">{item.question}</summary>
+                <details
+                  key={item.id}
+                  className={`group faq-item faq-${item.category} bg-slate-700/30 p-4 rounded-lg border border-slate-600/20 transition-transform duration-200 hover:scale-[1.02] hover:bg-slate-700/50`}
+                  data-category={item.category}
+                >
+                  <summary className="cursor-pointer text-white font-medium flex items-center justify-between gap-4">
+                    <span className="truncate">{item.question}</span>
+                    <span className="faq-arrow text-slate-400 transition-transform duration-200">▾</span>
+                  </summary>
                   <div className="mt-2 text-slate-300 whitespace-pre-line">{item.answer}</div>
                 </details>
               ))}

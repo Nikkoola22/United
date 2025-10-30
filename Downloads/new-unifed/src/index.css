@@ -311,3 +311,50 @@ details.group:focus-within::before {
 details.group[open] {
   box-shadow: 0 26px 90px rgba(99,102,241,0.26), 0 0 120px rgba(236,72,153,0.14);
 }
+
+/* Category-based subtle colored backgrounds for FAQ items */
+.faq-item {
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+}
+.faq-temps-travail {
+  background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(99,102,241,0.04));
+  border-color: rgba(99,102,241,0.18);
+}
+.faq-formation {
+  background: linear-gradient(135deg, rgba(236,72,153,0.06), rgba(168,85,247,0.04));
+  border-color: rgba(236,72,153,0.18);
+}
+.faq-conges {
+  background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(34,197,94,0.03));
+  border-color: rgba(34,197,94,0.18);
+}
+.faq-absences {
+  background: linear-gradient(135deg, rgba(234,179,8,0.06), rgba(245,158,11,0.03));
+  border-color: rgba(245,158,11,0.18);
+}
+.faq-general {
+  background: linear-gradient(135deg, rgba(148,163,184,0.04), rgba(148,163,184,0.02));
+  border-color: rgba(148,163,184,0.14);
+}
+
+/* Slight color accent on the left edge */
+.faq-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-top-left-radius: 0.75rem;
+  border-bottom-left-radius: 0.75rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* stronger accent per category */
+.faq-temps-travail::after { background: linear-gradient(180deg, rgba(59,130,246,0.9), rgba(99,102,241,0.6)); opacity: 0.18 }
+.faq-formation::after { background: linear-gradient(180deg, rgba(236,72,153,0.9), rgba(168,85,247,0.6)); opacity: 0.18 }
+.faq-conges::after { background: linear-gradient(180deg, rgba(16,185,129,0.9), rgba(34,197,94,0.6)); opacity: 0.18 }
+.faq-absences::after { background: linear-gradient(180deg, rgba(234,179,8,0.9), rgba(245,158,11,0.6)); opacity: 0.18 }
+.faq-general::after { background: linear-gradient(180deg, rgba(148,163,184,0.9), rgba(148,163,184,0.6)); opacity: 0.12 }
