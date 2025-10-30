@@ -604,7 +604,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                 <div className="flex justify-center mt-4">
                   <button
                     onClick={() => setChatState({ ...chatState, currentView: 'faq' })}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 rounded-full text-sm font-medium shadow hover:from-amber-600 hover:to-amber-700 transition"
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 rounded-full text-base font-medium shadow hover:from-amber-600 hover:to-amber-700 transition"
                   >
                     Questions fréquentes
                   </button>
@@ -620,7 +620,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
         <main className="relative max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 z-10">
           <section className="max-w-4xl mx-auto bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-purple-500/20 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-light text-white">Questions fréquentes</h2>
+              <h2 className="text-3xl font-light text-white">Questions fréquentes</h2>
               <button
                 onClick={() => setChatState({ ...chatState, currentView: 'menu' })}
                 className="px-3 py-1 bg-slate-700/60 text-slate-200 rounded hover:bg-slate-700/80 transition text-sm"
