@@ -669,6 +669,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
         <div className="px-4 sm:px-6 lg:px-8 py-12">
           {/* Bouton Retour */}
           <button
+            aria-label={activeCalculator === null ? 'Retour au menu' : 'Retour aux calculateurs'}
             onClick={() => {
               // If a specific calculator is open, return to the calculators landing (3 icons).
               // If already on the landing, go back to the main menu.
@@ -678,10 +679,15 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                 setActiveCalculator(null)
               }
             }}
-            className="mb-6 flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700/70 text-slate-300 hover:text-white px-4 py-2 rounded-lg transition-all duration-200 font-light"
+            className="mb-6 inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-2xl shadow-xl ring-1 ring-white/10 hover:scale-105 transform transition-all duration-200 font-semibold"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Retour au menu</span>
+            <ArrowLeft className="w-5 h-5 text-white" />
+            <span className="text-sm md:text-base select-none">
+              {activeCalculator === null ? 'Retour au menu' : 'Retour aux calculateurs'}
+            </span>
+            <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${activeCalculator === null ? 'bg-slate-900/20 text-white/90' : 'bg-amber-100 text-amber-900'}`}>
+              {activeCalculator === null ? 'Menu' : 'Calculateurs'}
+            </span>
           </button>
 
           {/* If no calculator selected, show 3 icon cards */}
