@@ -219,6 +219,14 @@ function App() {
   const [calculatedPrime, setCalculatedPrime] = useState<{ annual: number; monthly: number }>({ annual: 0, monthly: 0 })
   const [selectedIFSE2, setSelectedIFSE2] = useState<Set<number>>(new Set())
   const [activeCalculator, setActiveCalculator] = useState<'primes' | 'cia' | '13eme' | null>(null)
+  // 13ème mois calculator state
+  const [thirteenSalary, setThirteenSalary] = useState<string>("")
+  const [thirteenMonthsWorked, setThirteenMonthsWorked] = useState<number>(12)
+  const [thirteenthResult, setThirteenthResult] = useState<any>(null)
+  const [thirteenWeeklyHours, setThirteenWeeklyHours] = useState<string>("")
+  const [thirteenAnnualHours, setThirteenAnnualHours] = useState<string>("")
+  const [thirteenContractType, setThirteenContractType] = useState<'fonc' | 'contractuel'>('fonc')
+  const [thirteenProfession, setThirteenProfession] = useState<'standard' | 'medecin'>('standard')
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -661,7 +669,15 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
         <div className="px-4 sm:px-6 lg:px-8 py-12">
           {/* Bouton Retour */}
           <button
-            onClick={() => setChatState({ ...chatState, currentView: 'menu' })}
+            onClick={() => {
+              // If a specific calculator is open, return to the calculators landing (3 icons).
+              // If already on the landing, go back to the main menu.
+              if (activeCalculator === null) {
+                setChatState({ ...chatState, currentView: 'menu' })
+              } else {
+                setActiveCalculator(null)
+              }
+            }}
             className="mb-6 flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700/70 text-slate-300 hover:text-white px-4 py-2 rounded-lg transition-all duration-200 font-light"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -673,7 +689,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <button
                 onClick={() => setActiveCalculator('primes')}
-                className="group bg-gradient-to-br from-slate-800/70 to-blue-900/70 p-8 rounded-2xl border border-blue-500/20 hover:scale-105 transform transition shadow-lg text-left"
+                className="calc-card group bg-gradient-to-br from-slate-800/70 to-blue-900/70 p-8 rounded-2xl border border-blue-500/20 hover:scale-105 transform transition shadow-lg text-left"
               >
                 <div className="flex flex-col items-start gap-4">
                   <div className="p-4 bg-blue-600/20 rounded-lg">
@@ -686,7 +702,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
 
               <button
                 onClick={() => setActiveCalculator('cia')}
-                className="group bg-gradient-to-br from-slate-800/70 to-orange-900/70 p-8 rounded-2xl border border-orange-500/20 hover:scale-105 transform transition shadow-lg text-left"
+                className="calc-card group bg-gradient-to-br from-slate-800/70 to-orange-900/70 p-8 rounded-2xl border border-orange-500/20 hover:scale-105 transform transition shadow-lg text-left"
               >
                 <div className="flex flex-col items-start gap-4">
                   <div className="p-4 bg-orange-600/20 rounded-lg">
@@ -699,7 +715,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
 
               <button
                 onClick={() => setActiveCalculator('13eme')}
-                className="group bg-gradient-to-br from-slate-800/70 to-green-900/70 p-8 rounded-2xl border border-green-500/20 hover:scale-105 transform transition shadow-lg text-left"
+                className="calc-card group bg-gradient-to-br from-slate-800/70 to-green-900/70 p-8 rounded-2xl border border-green-500/20 hover:scale-105 transform transition shadow-lg text-left"
               >
                 <div className="flex flex-col items-start gap-4">
                   <div className="p-4 bg-green-600/20 rounded-lg">
@@ -891,7 +907,122 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                       <PiggyBank className="w-6 h-6 text-green-400" />
                       <h3 className="text-xl font-light text-white tracking-tight">Simulation 13ème mois</h3>
                     </div>
-                    <p className="text-slate-300">Ici vous pouvez simuler le 13ème mois et son prorata selon la durée de travail. (Fonctionnalité à implémenter)</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">Type de contrat</label>
+                        <select value={thirteenContractType} onChange={(e) => setThirteenContractType(e.target.value as any)} className="w-full px-3 py-2 rounded-lg bg-slate-700/50 text-white">
+                          <option value="fonc">Fonctionnaire / Titulaire</option>
+                          <option value="contractuel">Contractuel</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">Profession</label>
+                        <select value={thirteenProfession} onChange={(e) => setThirteenProfession(e.target.value as any)} className="w-full px-3 py-2 rounded-lg bg-slate-700/50 text-white">
+                          <option value="standard">Standard</option>
+                          <option value="medecin">Médecin</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">Salaire brut mensuel (€)</label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={thirteenSalary}
+                          onChange={(e) => setThirteenSalary(e.target.value)}
+                          placeholder="ex: 2500"
+                          className="w-full px-3 py-2 bg-slate-700/50 border border-green-500/30 rounded-lg text-white text-sm focus:border-green-400 focus:ring-2 focus:ring-green-400/20 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">Mois travaillés (0-12)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={12}
+                          value={thirteenMonthsWorked}
+                          onChange={(e) => setThirteenMonthsWorked(Math.max(0, Math.min(12, Number(e.target.value || 0))))}
+                          className="w-full px-3 py-2 bg-slate-700/50 border border-green-500/30 rounded-lg text-white text-sm focus:border-green-400 focus:ring-2 focus:ring-green-400/20 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">Heures hebdo (pour titulaires)</label>
+                        <input value={thirteenWeeklyHours} onChange={(e) => setThirteenWeeklyHours(e.target.value)} type="number" step="0.25" className="w-full px-3 py-2 rounded-lg bg-slate-700/50 text-white" placeholder="ex: 35" />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">Heures annuelles (pour contractuels)</label>
+                        <input value={thirteenAnnualHours} onChange={(e) => setThirteenAnnualHours(e.target.value)} type="number" step="1" className="w-full px-3 py-2 rounded-lg bg-slate-700/50 text-white" placeholder="ex: 600" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          const sal = parseFloat(thirteenSalary.toString().replace(',', '.')) || 0
+                          const months = Math.max(0, Math.min(12, Number(thirteenMonthsWorked || 0)))
+                          const weekly = parseFloat(thirteenWeeklyHours || '0')
+                          const annualH = parseFloat(thirteenAnnualHours || '0')
+
+                          const isContractuel = thirteenContractType === 'contractuel'
+                          const eligible = isContractuel ? (annualH >= 550) : (weekly > 17.5)
+
+                          if (!eligible) {
+                            setThirteenthResult({ eligible: false })
+                            return
+                          }
+
+                          const base = sal // 1 mois
+                          let schedule: { month: string; pct: number }[] = []
+                          if (thirteenProfession === 'medecin') {
+                            schedule = [ { month: 'Juin', pct: 0.5 }, { month: 'Novembre', pct: 0.5 }, { month: 'Décembre', pct: 0 } ]
+                          } else {
+                            schedule = [ { month: 'Juin', pct: 0.5 }, { month: 'Novembre', pct: 0.4 }, { month: 'Décembre', pct: 0.1 } ]
+                          }
+
+                          const prorata = months / 12
+                          const breakdown = schedule.map(s => ({ month: s.month, pct: s.pct, amount: +(base * s.pct * prorata).toFixed(2) }))
+                          const total = breakdown.reduce((sum, b) => sum + b.amount, 0)
+
+                          setThirteenthResult({ eligible: true, breakdown, total, prorata })
+                        }}
+                        className="px-4 py-2 bg-green-600/70 hover:bg-green-700 text-white rounded-lg shadow transition"
+                      >
+                        Calculer
+                      </button>
+                      <button
+                        onClick={() => { setThirteenSalary(''); setThirteenMonthsWorked(12); setThirteenthResult(null); setThirteenWeeklyHours(''); setThirteenAnnualHours(''); setThirteenContractType('fonc'); setThirteenProfession('standard') }}
+                        className="px-3 py-2 bg-slate-700/40 text-slate-200 rounded-lg hover:bg-slate-700/60 transition"
+                      >
+                        Réinitialiser
+                      </button>
+                    </div>
+
+                    {thirteenthResult && thirteenthResult.eligible === false && (
+                      <div className="mt-2 p-3 bg-amber-900/20 rounded-lg border border-amber-500/20 text-amber-200">Non éligible au 13ème mois selon les règles saisies (hebdo &gt; 17h30 ou contractuels ≥ 550h).</div>
+                    )}
+
+                    {thirteenthResult && thirteenthResult.eligible === true && (
+                      <div className="mt-2 p-4 bg-green-900/20 rounded-lg border border-green-500/20">
+                        <p className="text-sm text-slate-300 mb-2">Prorata appliqué: <span className="font-medium">{(thirteenthResult.prorata * 100).toFixed(0)}%</span></p>
+                        <div className="space-y-2">
+                          {thirteenthResult.breakdown.map((b: any, idx: number) => (
+                            <div key={idx} className="flex justify-between text-slate-200">
+                              <div>{b.month} ({(b.pct*100).toFixed(0)}%)</div>
+                              <div className="font-mono">{b.amount.toFixed(2)} €</div>
+                            </div>
+                          ))}
+                          <div className="border-t border-slate-600/20 pt-2 flex justify-between text-white font-medium">
+                            <div>Total estimé</div>
+                            <div className="font-mono">{thirteenthResult.total.toFixed(2)} €</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
