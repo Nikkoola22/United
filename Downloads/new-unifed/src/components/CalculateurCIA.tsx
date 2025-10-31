@@ -117,7 +117,7 @@ Calcul détaillé du CIA:
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-orange-800">
-              <strong>💰 IFSE Mensuel (Indemnité Forfaitaire pour Sujétion Exceptionnelle) :</strong>
+              <strong>indemnite de fonction, de sujetions et d expertise</strong>
               <div className="mt-2">📋 <strong>Calcul du CIA (Complément Indemnitaire Annuel)</strong></div>
               <ul className="mt-2 space-y-1 ml-4 list-disc">
                 <li><strong>Base:</strong> 10% du montant IFSE mensuel × 12 mois ÷ 2</li>
@@ -135,7 +135,7 @@ Calcul détaillé du CIA:
         {/* Entrée IFSE Mensuel */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            💰 IFSE Mensuel (Indemnité Forfaitaire pour Sujétion Exceptionnelle)
+            indemnite de fonction, de sujetions et d expertise
           </label>
           <div className="flex items-center gap-3">
             <span className="text-lg font-bold text-gray-600">€</span>
@@ -201,6 +201,12 @@ Calcul détaillé du CIA:
             />
             <span className="text-gray-600">jours d'absence en année N-1</span>
           </div>
+
+          {/* Clarification: include weekends when counting absences */}
+          <div className="mt-2 text-xs text-gray-500">
+            <strong>Note :</strong> Les arrêts se comptent en jours calendaires — un arrêt qui couvre un week-end compte tous les jours inclus.
+            Par exemple, un arrêt commençant le vendredi matin et se terminant le lundi soir est comptabilisé comme 4 jours (ven, sam, dim, lun).
+          </div>
           
           {/* Affichage du taux appliqué */}
           <div className="mt-3 p-3 bg-white rounded border border-red-300">
@@ -263,24 +269,7 @@ Calcul détaillé du CIA:
           </div>
         )}
 
-        {/* Info CIA */}
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-orange-800">
-              <strong>📋 Calcul du CIA (Complément Indemnitaire Annuel)</strong>
-              <ul className="mt-2 space-y-1 ml-4 list-disc">
-                <li><strong>Base:</strong> 10% du montant IFSE mensuel × 12 mois ÷ 2</li>
-                <li><strong>Première moitié:</strong> Taux d'évaluation annuelle (0%, 50%, 70%, ou 100%)</li>
-                <li><strong>Deuxième moitié:</strong> Basée sur jours d'absence année N-1</li>
-                <li><strong>Seuils absence:</strong> &lt;5j=100% | 5-10j=50% | &gt;10j=0%</li>
-              </ul>
-              <p className="mt-3 text-xs text-orange-700">
-                💡 Pour des informations complètes, consultez la CFDT ou votre service RH
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* (Info block removed - duplicate of the summary shown above the IFSE input) */}
 
         {/* Boutons */}
         <div className="flex justify-end space-x-3 pt-4 border-t">
