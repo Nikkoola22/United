@@ -112,7 +112,26 @@ Calcul détaillé du CIA:
       </div>
 
       <div className="p-6 space-y-6 bg-white">
-        
+        {/* Info / Rappel du calcul CIA (placé avant l'IFSE Mensuel) */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-orange-800">
+              <strong>💰 IFSE Mensuel (Indemnité Forfaitaire pour Sujétion Exceptionnelle) :</strong>
+              <div className="mt-2">📋 <strong>Calcul du CIA (Complément Indemnitaire Annuel)</strong></div>
+              <ul className="mt-2 space-y-1 ml-4 list-disc">
+                <li><strong>Base:</strong> 10% du montant IFSE mensuel × 12 mois ÷ 2</li>
+                <li><strong>Première moitié:</strong> Taux d'évaluation annuelle (0%, 50%, 70%, ou 100%)</li>
+                <li><strong>Deuxième moitié:</strong> Basée sur jours d'absence année N-1</li>
+                <li><strong>Seuils absence:</strong> &lt;5j=100% | 5-10j=50% | &gt;10j=0%</li>
+              </ul>
+              <p className="mt-3 text-xs text-orange-700">
+                💡 Pour des informations complètes, consultez la CFDT ou votre service RH
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Entrée IFSE Mensuel */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <label className="block text-sm font-medium text-gray-700 mb-3">
