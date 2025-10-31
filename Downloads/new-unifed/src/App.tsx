@@ -1,6 +1,6 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Phone, Mail, MapPin, ArrowRight, Send, ArrowLeft, Search, Rss, Calculator } from "lucide-react"
+import { Phone, Mail, MapPin, ArrowRight, Send, ArrowLeft, Search, Rss, Calculator, PieChart, PiggyBank } from "lucide-react"
 
 // --- IMPORTATIONS DES DONNÉES ---
 import { sommaire } from "./data/sommaire.ts"
@@ -218,7 +218,7 @@ function App() {
   const [selectedDirection, setSelectedDirection] = useState<string>("")
   const [calculatedPrime, setCalculatedPrime] = useState<{ annual: number; monthly: number }>({ annual: 0, monthly: 0 })
   const [selectedIFSE2, setSelectedIFSE2] = useState<Set<number>>(new Set())
-  const [activeCalculator, setActiveCalculator] = useState<'primes' | 'cia'>('primes')
+  const [activeCalculator, setActiveCalculator] = useState<'primes' | 'cia' | '13eme' | null>(null)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -576,7 +576,7 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                   </button>
 
                   <button
-                    onClick={() => setChatState({ ...chatState, currentView: 'calculators' })}
+                    onClick={() => { setChatState({ ...chatState, currentView: 'calculators' }); setActiveCalculator(null); }}
                     className="group relative overflow-hidden bg-gradient-to-br from-slate-800/70 via-blue-900/70 to-slate-800/70 backdrop-blur-md border border-blue-500/30 rounded-2xl p-10 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-2xl hover:-translate-y-1 w-80 h-96"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-transparent to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -668,175 +668,235 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
             <span>Retour au menu</span>
           </button>
 
-          <div className="w-full bg-gradient-to-br from-slate-800/95 via-blue-900/95 to-slate-800/95 backdrop-blur-md border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header avec onglets */}
-            <div className="bg-gradient-to-r from-slate-800/95 to-blue-900/95 backdrop-blur-md border-b border-blue-500/30 p-0 z-10">
-              <div className="flex gap-2 p-4">
-                <button
-                  onClick={() => setActiveCalculator('primes')}
-                  className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
-                    activeCalculator === 'primes'
-                      ? 'bg-blue-600/70 text-white border border-blue-400/50'
-                      : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
-                  }`}
-                >
-                  📈 Primes IFSE
-                </button>
-                <button
-                  onClick={() => setActiveCalculator('cia')}
-                  className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
-                    activeCalculator === 'cia'
-                      ? 'bg-orange-600/70 text-white border border-orange-400/50'
-                      : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
-                  }`}
-                >
-                  📊 CIA
-                </button>
-              </div>
+          {/* If no calculator selected, show 3 icon cards */}
+          {activeCalculator === null ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <button
+                onClick={() => setActiveCalculator('primes')}
+                className="group bg-gradient-to-br from-slate-800/70 to-blue-900/70 p-8 rounded-2xl border border-blue-500/20 hover:scale-105 transform transition shadow-lg text-left"
+              >
+                <div className="flex flex-col items-start gap-4">
+                  <div className="p-4 bg-blue-600/20 rounded-lg">
+                    <Calculator className="w-12 h-12 text-blue-300" />
+                  </div>
+                  <h3 className="text-xl font-light text-white">IFSE (Primes)</h3>
+                  <p className="text-sm text-slate-300">Calculateur IFSE 1 & IFSE 2</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveCalculator('cia')}
+                className="group bg-gradient-to-br from-slate-800/70 to-orange-900/70 p-8 rounded-2xl border border-orange-500/20 hover:scale-105 transform transition shadow-lg text-left"
+              >
+                <div className="flex flex-col items-start gap-4">
+                  <div className="p-4 bg-orange-600/20 rounded-lg">
+                    <PieChart className="w-12 h-12 text-orange-300" />
+                  </div>
+                  <h3 className="text-xl font-light text-white">CIA</h3>
+                  <p className="text-sm text-slate-300">Calculatrice CIA / Indemnités</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveCalculator('13eme')}
+                className="group bg-gradient-to-br from-slate-800/70 to-green-900/70 p-8 rounded-2xl border border-green-500/20 hover:scale-105 transform transition shadow-lg text-left"
+              >
+                <div className="flex flex-col items-start gap-4">
+                  <div className="p-4 bg-green-600/20 rounded-lg">
+                    <PiggyBank className="w-12 h-12 text-green-300" />
+                  </div>
+                  <h3 className="text-xl font-light text-white">13ème mois</h3>
+                  <p className="text-sm text-slate-300">Simulation du 13ème mois et prorata</p>
+                </div>
+              </button>
             </div>
+          ) : (
+            <div className="w-full bg-gradient-to-br from-slate-800/95 via-blue-900/95 to-slate-800/95 backdrop-blur-md border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden">
+              {/* Header avec onglets */}
+              <div className="bg-gradient-to-r from-slate-800/95 to-blue-900/95 backdrop-blur-md border-b border-blue-500/30 p-0 z-10">
+                <div className="flex gap-2 p-4">
+                  <button
+                    onClick={() => setActiveCalculator('primes')}
+                    className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
+                      activeCalculator === 'primes'
+                        ? 'bg-blue-600/70 text-white border border-blue-400/50'
+                        : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
+                    }`}
+                  >
+                    📈 Primes IFSE
+                  </button>
+                  <button
+                    onClick={() => setActiveCalculator('cia')}
+                    className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
+                      activeCalculator === 'cia'
+                        ? 'bg-orange-600/70 text-white border border-orange-400/50'
+                        : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
+                    }`}
+                  >
+                    📊 CIA
+                  </button>
+                  <button
+                    onClick={() => setActiveCalculator('13eme')}
+                    className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
+                      activeCalculator === '13eme'
+                        ? 'bg-green-600/70 text-white border border-green-400/50'
+                        : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
+                    }`}
+                  >
+                    💰 13ème mois
+                  </button>
+                </div>
+              </div>
 
-            {/* Contenu des calculateurs */}
-            <div className="p-8 space-y-4">
-              {/* Calculateur PRIMES */}
-              {activeCalculator === 'primes' && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Calculator className="w-6 h-6 text-blue-400" />
-                    <h3 className="text-xl font-light text-white tracking-tight">Calcul des Primes</h3>
-                  </div>
-                        
-                  {/* Sélection de la catégorie */}
-                  <div>
-                    <label className="block text-base font-light text-slate-300 mb-2">Catégorie</label>
-                    <select 
-                      value={selectedCategory}
-                      onChange={(e) => handleCategoryChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-700/50 border border-blue-500/30 rounded-lg text-white text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all cursor-pointer"
-                    >
-                      <option value="">Sélectionner une catégorie</option>
-                      <option value="A">Catégorie A</option>
-                      <option value="B">Catégorie B</option>
-                      <option value="C">Catégorie C</option>
-                    </select>
-                  </div>
-
-                  {/* Sélection de la fonction (IFSE 1) */}
-                  <div>
-                    <label className="block text-base font-light text-slate-300 mb-2">Fonction (IFSE 1)</label>
-                    <select 
-                      value={selectedFunction}
-                      onChange={(e) => handleFunctionChange(e.target.value)}
-                      disabled={!selectedCategory}
-                      className="w-full px-3 py-2 bg-slate-700/50 border border-blue-500/30 rounded-lg text-white text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="">Sélectionner une fonction</option>
-                      {selectedCategory && ifse1Data.filter(item => item.category === selectedCategory).map((item) => (
-                        <option key={item.functionCode} value={item.function}>
-                          {item.function}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Résultat IFSE 1 */}
-                  {calculatedPrime.annual > 0 && (
-                    <div className="mt-4 pt-4 border-t border-blue-500/20">
-                      <p className="text-sm font-light text-slate-400 mb-1">IFSE 1 - Prime de fonction</p>
-                      <p className="text-4xl font-light text-blue-300">{calculatedPrime.annual.toLocaleString('fr-FR')} €/an</p>
-                      <p className="text-sm text-slate-400">Soit {calculatedPrime.monthly.toLocaleString('fr-FR')} €/mois</p>
+              {/* Contenu des calculateurs */}
+              <div className="p-8 space-y-4">
+                {/* Calculateur PRIMES */}
+                {activeCalculator === 'primes' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Calculator className="w-6 h-6 text-blue-400" />
+                      <h3 className="text-xl font-light text-white tracking-tight">Calcul des Primes</h3>
                     </div>
-                  )}
+                    {/* existing primes UI omitted for brevity; kept as before */}
+                    {/* Sélection de la catégorie */}
+                    <div>
+                      <label className="block text-base font-light text-slate-300 mb-2">Catégorie</label>
+                      <select 
+                        value={selectedCategory}
+                        onChange={(e) => handleCategoryChange(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-700/50 border border-blue-500/30 rounded-lg text-white text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">Sélectionner une catégorie</option>
+                        <option value="A">Catégorie A</option>
+                        <option value="B">Catégorie B</option>
+                        <option value="C">Catégorie C</option>
+                      </select>
+                    </div>
 
-                  {/* Sélection de la direction (IFSE 2) */}
-                  <div className="mt-4 pt-4 border-t border-blue-500/20">
-                    <label className="block text-base font-light text-slate-300 mb-2">Direction (IFSE 2)</label>
-                    <select 
-                      value={selectedDirection}
-                      onChange={(e) => handleDirectionChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-700/50 border border-blue-500/30 rounded-lg text-white text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all cursor-pointer"
-                    >
-                      <option value="">Sélectionner une direction</option>
-                      {getAllDirections().map((dir) => (
-                        <option key={dir} value={dir}>
-                          {getDirectionFullName(dir)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    {/* Sélection de la fonction (IFSE 1) */}
+                    <div>
+                      <label className="block text-base font-light text-slate-300 mb-2">Fonction (IFSE 1)</label>
+                      <select 
+                        value={selectedFunction}
+                        onChange={(e) => handleFunctionChange(e.target.value)}
+                        disabled={!selectedCategory}
+                        className="w-full px-3 py-2 bg-slate-700/50 border border-blue-500/30 rounded-lg text-white text-base focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Sélectionner une fonction</option>
+                        {selectedCategory && ifse1Data.filter(item => item.category === selectedCategory).map((item) => (
+                          <option key={item.functionCode} value={item.function}>
+                            {item.function}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {/* Affichage des primes IFSE 2 */}
-                  {selectedDirection && (
+                    {/* Remaining primes UI preserved unchanged... */}
+                    {calculatedPrime.annual > 0 && (
+                      <div className="mt-4 pt-4 border-t border-blue-500/20">
+                        <p className="text-sm font-light text-slate-400 mb-1">IFSE 1 - Prime de fonction</p>
+                        <p className="text-4xl font-light text-blue-300">{calculatedPrime.annual.toLocaleString('fr-FR')} €/an</p>
+                        <p className="text-sm text-slate-400">Soit {calculatedPrime.monthly.toLocaleString('fr-FR')} €/mois</p>
+                      </div>
+                    )}
+
                     <div className="mt-4 pt-4 border-t border-blue-500/20">
-                      <p className="text-sm font-light text-slate-400 mb-3">IFSE 2 - Primes complémentaires (cocher pour inclure)</p>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {getIFSE2ByDirection(selectedDirection).map((prime, idx) => (
-                          <div key={idx} className="bg-slate-700/30 rounded-lg p-2 border border-blue-500/20 cursor-pointer hover:bg-slate-700/50 transition" onClick={() => handleToggleIFSE2(idx)}>
-                            {/* Checkbox et info principales */}
-                            <div className="flex items-start gap-2">
-                              <input
-                                type="checkbox"
-                                checked={selectedIFSE2.has(idx)}
-                                onChange={() => handleToggleIFSE2(idx)}
-                                className="mt-0.5 cursor-pointer accent-green-400"
-                              />
-                              <div className="flex-1">
-                                <p className="text-sm font-light text-slate-300">{prime.motif}</p>
-                                <p className="text-green-400 font-light text-base">{prime.amount.toLocaleString('fr-FR')} €/mois</p>
-                                {prime.service && prime.service !== 'Tous services' && (
-                                  <p className="text-xs text-slate-400 mt-1">
-                                    <span className="font-light">Service:</span> {prime.service}
-                                  </p>
-                                )}
-                                {prime.jobs && prime.jobs.length > 0 && (
-                                  <div className="mt-1">
-                                    <p className="text-xs text-slate-400 font-light">Métier(s):</p>
-                                    <ul className="text-xs text-slate-300 ml-2 mt-0.5 space-y-0.5">
-                                      {prime.jobs.map((job, jIdx) => (
-                                        <li key={jIdx} className="truncate">
-                                          • {job}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                      <label className="block text-base font-light text-slate-300 mb-2">Direction (IFSE 2)</label>
+                      <select 
+                        value={selectedDirection}
+                        onChange={(e) => handleDirectionChange(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-700/50 border border-blue-500/30 rounded-lg text-white text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">Sélectionner une direction</option>
+                        {getAllDirections().map((dir) => (
+                          <option key={dir} value={dir}>
+                            {getDirectionFullName(dir)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {selectedDirection && (
+                      <div className="mt-4 pt-4 border-t border-blue-500/20">
+                        <p className="text-sm font-light text-slate-400 mb-3">IFSE 2 - Primes complémentaires (cocher pour inclure)</p>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {getIFSE2ByDirection(selectedDirection).map((prime, idx) => (
+                            <div key={idx} className="bg-slate-700/30 rounded-lg p-2 border border-blue-500/20 cursor-pointer hover:bg-slate-700/50 transition" onClick={() => handleToggleIFSE2(idx)}>
+                              <div className="flex items-start gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedIFSE2.has(idx)}
+                                  onChange={() => handleToggleIFSE2(idx)}
+                                  className="mt-0.5 cursor-pointer accent-green-400"
+                                />
+                                <div className="flex-1">
+                                  <p className="text-sm font-light text-slate-300">{prime.motif}</p>
+                                  <p className="text-green-400 font-light text-base">{prime.amount.toLocaleString('fr-FR')} €/mois</p>
+                                  {prime.service && prime.service !== 'Tous services' && (
+                                    <p className="text-xs text-slate-400 mt-1">
+                                      <span className="font-light">Service:</span> {prime.service}
+                                    </p>
+                                  )}
+                                  {prime.jobs && prime.jobs.length > 0 && (
+                                    <div className="mt-1">
+                                      <p className="text-xs text-slate-400 font-light">Métier(s):</p>
+                                      <ul className="text-xs text-slate-300 ml-2 mt-0.5 space-y-0.5">
+                                        {prime.jobs.map((job, jIdx) => (
+                                          <li key={jIdx} className="truncate">
+                                            • {job}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* TOTAL MENSUEL */}
-                  {(calculatedPrime.monthly > 0 || selectedIFSE2.size > 0) && (
-                    <div className="mt-4 pt-4 border-t-2 border-green-500/50 bg-gradient-to-r from-green-500/10 to-cyan-500/10 rounded-lg p-3">
-                      <p className="text-sm font-light text-slate-400 mb-2">Montant total mensuel</p>
-                      <p className="text-4xl font-light text-green-400">{calculateTotalMonthly().toLocaleString('fr-FR')} €</p>
-                      <div className="text-sm text-slate-300 mt-2 space-y-0.5">
-                        <p>IFSE 1: {calculatedPrime.monthly.toLocaleString('fr-FR')} €</p>
-                        <p>IFSE 2: {Array.from(selectedIFSE2).reduce((sum, idx) => {
-                          const ifse2List = getIFSE2ByDirection(selectedDirection)
-                          return sum + (ifse2List[idx]?.amount || 0)
-                        }, 0).toLocaleString('fr-FR')} €</p>
+                    {(calculatedPrime.monthly > 0 || selectedIFSE2.size > 0) && (
+                      <div className="mt-4 pt-4 border-t-2 border-green-500/50 bg-gradient-to-r from-green-500/10 to-cyan-500/10 rounded-lg p-3">
+                        <p className="text-sm font-light text-slate-400 mb-2">Montant total mensuel</p>
+                        <p className="text-4xl font-light text-green-400">{calculateTotalMonthly().toLocaleString('fr-FR')} €</p>
+                        <div className="text-sm text-slate-300 mt-2 space-y-0.5">
+                          <p>IFSE 1: {calculatedPrime.monthly.toLocaleString('fr-FR')} €</p>
+                          <p>IFSE 2: {Array.from(selectedIFSE2).reduce((sum, idx) => {
+                            const ifse2List = getIFSE2ByDirection(selectedDirection)
+                            return sum + (ifse2List[idx]?.amount || 0)
+                          }, 0).toLocaleString('fr-FR')} €</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Info */}
-                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                    <p className="text-sm text-slate-300 font-light">
-                      ℹ️ IFSE 1 : Prime de fonction • IFSE 2 : Sélectionnez les primes applicables
-                    </p>
+                    <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                      <p className="text-sm text-slate-300 font-light">
+                        ℹ️ IFSE 1 : Prime de fonction • IFSE 2 : Sélectionnez les primes applicables
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Calculateur CIA */}
-              {activeCalculator === 'cia' && (
-                <CalculateurCIA onClose={() => setActiveCalculator('primes')} />
-              )}
+                {/* Calculateur CIA */}
+                {activeCalculator === 'cia' && (
+                  <CalculateurCIA onClose={() => setActiveCalculator(null)} />
+                )}
+
+                {/* 13eme mois simple placeholder */}
+                {activeCalculator === '13eme' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <PiggyBank className="w-6 h-6 text-green-400" />
+                      <h3 className="text-xl font-light text-white tracking-tight">Simulation 13ème mois</h3>
+                    </div>
+                    <p className="text-slate-300">Ici vous pouvez simuler le 13ème mois et son prorata selon la durée de travail. (Fonctionnalité à implémenter)</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
       )}
