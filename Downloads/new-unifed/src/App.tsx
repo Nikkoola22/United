@@ -219,6 +219,11 @@ function App() {
   const [calculatedPrime, setCalculatedPrime] = useState<{ annual: number; monthly: number }>({ annual: 0, monthly: 0 })
   const [selectedIFSE2, setSelectedIFSE2] = useState<Set<number>>(new Set())
   const [activeCalculator, setActiveCalculator] = useState<'primes' | 'cia' | '13eme' | null>(null)
+  // IFSE3 weekend primes state
+  const [weekendSaturdays, setWeekendSaturdays] = useState<number>(0)
+  const [weekendSundays, setWeekendSundays] = useState<number>(0)
+  const [weekendRateSat, setWeekendRateSat] = useState<number>(40)
+  const [weekendRateSun, setWeekendRateSun] = useState<number>(40)
   // 13ème mois calculator state
   const [thirteenSalary, setThirteenSalary] = useState<string>("")
   const [thirteenMonthsWorked, setThirteenMonthsWorked] = useState<number>(12)
@@ -372,8 +377,25 @@ function App() {
         }
       })
     }
+    // IFSE3: weekend primes (Saturdays and Sundays per month * selected rate)
+    const satCount = Number.isFinite(Number(weekendSaturdays)) ? Number(weekendSaturdays) : 0
+    const sunCount = Number.isFinite(Number(weekendSundays)) ? Number(weekendSundays) : 0
+    const satTotal = satCount * (Number(weekendRateSat) || 0)
+    const sunTotal = sunCount * (Number(weekendRateSun) || 0)
+    total += satTotal + sunTotal
     return total
   }
+
+  // Precompute IFSE2 and IFSE3 subtotals for display
+  const ifse2Sum = (() => {
+    if (!selectedDirection) return 0
+    const list = getIFSE2ByDirection(selectedDirection)
+    return Array.from(selectedIFSE2).reduce((sum, idx) => sum + (list[idx]?.amount || 0), 0)
+  })()
+
+  const ifse3SatTotal = (Number(weekendSaturdays) || 0) * (Number(weekendRateSat) || 0)
+  const ifse3SunTotal = (Number(weekendSundays) || 0) * (Number(weekendRateSun) || 0)
+  const ifse3Total = ifse3SatTotal + ifse3SunTotal
   const appelPerplexity = async (messages: any[]) => {
     try {
       const data = { model: "sonar-pro", messages }
@@ -734,39 +756,17 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
             </div>
           ) : (
             <div className="w-full bg-gradient-to-br from-slate-800/95 via-blue-900/95 to-slate-800/95 backdrop-blur-md border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden">
-              {/* Header avec onglets */}
-              <div className="bg-gradient-to-r from-slate-800/95 to-blue-900/95 backdrop-blur-md border-b border-blue-500/30 p-0 z-10">
-                <div className="flex gap-2 p-4">
-                  <button
-                    onClick={() => setActiveCalculator('primes')}
-                    className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
-                      activeCalculator === 'primes'
-                        ? 'bg-blue-600/70 text-white border border-blue-400/50'
-                        : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
-                    }`}
-                  >
-                    📈 Primes IFSE
-                  </button>
-                  <button
-                    onClick={() => setActiveCalculator('cia')}
-                    className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
-                      activeCalculator === 'cia'
-                        ? 'bg-orange-600/70 text-white border border-orange-400/50'
-                        : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
-                    }`}
-                  >
-                    📊 CIA
-                  </button>
-                  <button
-                    onClick={() => setActiveCalculator('13eme')}
-                    className={`flex-1 px-4 py-3 rounded-lg text-base font-light transition-all ${
-                      activeCalculator === '13eme'
-                        ? 'bg-green-600/70 text-white border border-green-400/50'
-                        : 'bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-700/70'
-                    }`}
-                  >
-                    💰 13ème mois
-                  </button>
+              {/* Compact header for a single calculator (hide other calculator buttons) */}
+              <div className="bg-gradient-to-r from-slate-800/95 to-blue-900/95 backdrop-blur-md border-b border-blue-500/30 p-4 z-10">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    {activeCalculator === 'primes' && <Calculator className="w-6 h-6 text-blue-400" />}
+                    {activeCalculator === 'cia' && <PieChart className="w-6 h-6 text-orange-400" />}
+                    {activeCalculator === '13eme' && <PiggyBank className="w-6 h-6 text-green-400" />}
+                    <h3 className="text-lg font-semibold text-white">
+                      {activeCalculator === 'primes' ? 'Primes IFSE' : activeCalculator === 'cia' ? 'CIA' : '13ème mois'}
+                    </h3>
+                  </div>
                 </div>
               </div>
 
@@ -817,8 +817,8 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                     {calculatedPrime.annual > 0 && (
                       <div className="mt-4 pt-4 border-t border-blue-500/20">
                         <p className="text-sm font-light text-slate-400 mb-1">IFSE 1 - Prime de fonction</p>
-                        <p className="text-4xl font-light text-blue-300">{calculatedPrime.annual.toLocaleString('fr-FR')} €/an</p>
-                        <p className="text-sm text-slate-400">Soit {calculatedPrime.monthly.toLocaleString('fr-FR')} €/mois</p>
+                        <p className="text-5xl font-light text-blue-300">{calculatedPrime.monthly.toLocaleString('fr-FR')} €/mois</p>
+                        <p className="text-sm text-slate-400 mt-2">Soit {calculatedPrime.annual.toLocaleString('fr-FR')} €/an</p>
                       </div>
                     )}
 
@@ -879,7 +879,42 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                       </div>
                     )}
 
-                    {(calculatedPrime.monthly > 0 || selectedIFSE2.size > 0) && (
+                    {/* IFSE3 - Primes week-end */}
+                    <div className="mt-4 pt-4 border-t border-blue-500/10">
+                      <label className="block text-base font-light text-slate-300 mb-2">IFSE 3 — Primes week-end</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-sm text-slate-300">Samedis / mois</label>
+                          <select value={weekendSaturdays} onChange={(e) => setWeekendSaturdays(Number(e.target.value))} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/20 rounded-lg text-white text-sm">
+                            {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm text-slate-300">Dimanches / mois</label>
+                          <select value={weekendSundays} onChange={(e) => setWeekendSundays(Number(e.target.value))} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/20 rounded-lg text-white text-sm">
+                            {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm text-slate-300">Taux Samedi / Dimanche</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <select value={weekendRateSat} onChange={(e) => setWeekendRateSat(Number(e.target.value))} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/20 rounded-lg text-white text-sm">
+                              <option value={40}>40 € — jusqu'à 3h13</option>
+                              <option value={60}>60 € — entre 3h16 et 7h12</option>
+                              <option value={80}>80 € — plus de 7h12</option>
+                            </select>
+                            <select value={weekendRateSun} onChange={(e) => setWeekendRateSun(Number(e.target.value))} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/20 rounded-lg text-white text-sm">
+                              <option value={40}>40 € — jusqu'à 3h13</option>
+                              <option value={60}>60 € — entre 3h16 et 7h12</option>
+                              <option value={80}>80 € — plus de 7h12</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">Choisissez le nombre moyen de samedis et dimanches travaillés par mois, et le taux applicable pour chaque type de jour. Le total IFSE3 sera ajouté au montant mensuel.</p>
+                    </div>
+
+                    {(calculatedPrime.monthly > 0 || selectedIFSE2.size > 0 || ifse3Total > 0) && (
                       <div className="mt-4 pt-4 border-t-2 border-green-500/50 bg-gradient-to-r from-green-500/10 to-cyan-500/10 rounded-lg p-3">
                         <p className="text-sm font-light text-slate-400 mb-2">Montant total mensuel</p>
                         <p className="text-4xl font-light text-green-400">{calculateTotalMonthly().toLocaleString('fr-FR')} €</p>
@@ -889,6 +924,9 @@ Rappel : Tu ne dois JAMAIS mentionner des articles de loi ou des références ex
                             const ifse2List = getIFSE2ByDirection(selectedDirection)
                             return sum + (ifse2List[idx]?.amount || 0)
                           }, 0).toLocaleString('fr-FR')} €</p>
+                          {ifse3SatTotal > 0 && <p>IFSE 3 (Samedis): {ifse3SatTotal.toLocaleString('fr-FR')} €</p>}
+                          {ifse3SunTotal > 0 && <p>IFSE 3 (Dimanches): {ifse3SunTotal.toLocaleString('fr-FR')} €</p>}
+                          {ifse3Total > 0 && <p className="font-medium">IFSE 3 - Total: {ifse3Total.toLocaleString('fr-FR')} €</p>}
                         </div>
                       </div>
                     )}

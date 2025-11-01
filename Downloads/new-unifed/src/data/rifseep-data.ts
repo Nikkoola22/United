@@ -448,6 +448,36 @@ export const ifse2Data: IFSE2Data[] = [
     direction: 'DMSP',
     service: 'Direction administrative'
   },
+
+  // Ajout - libellés spécifiques fournis (Indemnités horaires décalés)
+  {
+    motif: 'Indemnités horaires décalés cat 1',
+    amount: 20,
+    jobs: ['Animateur ALM'],
+    direction: 'DME',
+    service: 'Enfance'
+  },
+  {
+    motif: 'Indemnités horaires décalés cat 1',
+    amount: 20,
+    jobs: ['Animateur ALE'],
+    direction: 'DCJ',
+    service: 'Jeunesse'
+  },
+  {
+    motif: 'Indemnités horaires décalés cat 1',
+    amount: 20,
+    jobs: ['Coordinateur du fil continu'],
+    direction: 'DMSP',
+    service: 'Dentaire'
+  },
+  {
+    motif: 'Indemnités horaires décalés cat 1',
+    amount: 20,
+    jobs: ['Médiateur du fil continu'],
+    direction: 'DMSP',
+    service: 'Prestations de solidarité'
+  },
   {
     motif: 'Prime accueil 1',
     amount: 50,
